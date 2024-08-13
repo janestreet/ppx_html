@@ -1,0 +1,425 @@
+open! Core
+open Test_utils
+
+let%expect_test "Hello world!" =
+  test {|<h1>Hello World!</h1>|};
+  [%expect {| Html_syntax.Node.h1 [Html_syntax.Node.text "Hello World!"] |}]
+;;
+
+let%expect_test "Nesting" =
+  test
+    {|
+  <p> Capybaras are <strong>cool</strong></p>
+  |};
+  [%expect
+    {|
+    Html_syntax.Node.p
+      [Html_syntax.Node.text " Capybaras are ";
+      Html_syntax.Node.strong [Html_syntax.Node.text "cool"]]
+    |}]
+;;
+
+let%expect_test "HTML Custom elements" =
+  (* NOTE: This test only shows current behavior and is not
+     necesarily a bug/something we should fix. A potential scenario
+     is that for custom elements like there (i.e. ones that are kebab-case
+     we could use Vdom.Node.create "custom-element" instead.). Also unsure
+     if this should be supported as it's also supported via the interpolation
+     syntax.
+
+     https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements *)
+  Expect_test_helpers_core.require_does_raise (fun () ->
+    test
+      {|
+    <custom-element></custom-element>
+  |});
+  [%expect {| ("Expected closing '>' to terminate element \"custom\", but found '-'") |}];
+  (* This is a current possible workaround in this rare  situation. *)
+  test
+    {|
+    <%{Vdom.Node.create "custom-element"}></>
+  |};
+  [%expect {xxx| Vdom.Node.create "custom-element" [] |xxx}]
+;;
+
+let%expect_test "Element tag interpolation" =
+  test
+    {|
+    <%{EXPR}></>
+  |};
+  [%expect {| EXPR [] |}];
+  test
+    {|
+    <%{EXPR}/>
+  |};
+  [%expect {| EXPR () |}]
+;;
+
+let%expect_test "Attributes" =
+  test
+    {|
+    <h2 class_=menu-add-card-header height="20" on_click=%{fun _ -> Effect.print_s [%message "hello"]}></h2>
+  |};
+  [%expect
+    {|
+    Html_syntax.Node.h2
+      ~attrs:[(Html_syntax.Attr.class_ "menu-add-card-header" : Virtual_dom.Vdom.Attr.t);
+             (Html_syntax.Attr.height "20" : Virtual_dom.Vdom.Attr.t);
+             (Html_syntax.Attr.on_click
+                (fun _ -> Effect.print_s ([%message "hello"])) : Virtual_dom.Vdom.Attr.t)]
+      []
+    |}];
+  [%expect {| |}]
+;;
+
+let%expect_test "Attributes and element tag interpolation" =
+  test
+    {|
+    <%{ELEMENT_EXPR} %{ATTRIBUTE_EXPR} foo=%{DUMMY_ATTR_EXPR}></>
+  |};
+  [%expect
+    {|
+    ELEMENT_EXPR
+      ~attrs:[(ATTRIBUTE_EXPR : Virtual_dom.Vdom.Attr.t);
+             (Html_syntax.Attr.foo DUMMY_ATTR_EXPR : Virtual_dom.Vdom.Attr.t)] []
+    |}]
+;;
+
+let%expect_test "Key-based attribute interpolation" =
+  (* NOTE: This currently only demonstrates existing behavior of
+     a feature we may want to support in the future. *)
+  Expect_test_helpers_core.require_does_raise (fun () ->
+    test
+      {|
+    <div %{Virtual_dom_svg.Attr.href}="google.com"></div>
+  |});
+  [%expect {| ("Expected closing '>' to terminate element \"div\", but found '='") |}];
+  test
+    {|
+    <%{EXPR}></>
+  |};
+  [%expect {| EXPR [] |}]
+;;
+
+let%expect_test "Empty node" =
+  test {||};
+  [%expect {| Html_syntax.Node.none |}]
+;;
+
+let%expect_test "JSX fragment" =
+  test {|<></>|};
+  [%expect {| Html_syntax.Node.fragment [] |}]
+;;
+
+let%expect_test "Interpolation with no parsing context" =
+  test {|%{foo}|};
+  [%expect {| (foo : Virtual_dom.Vdom.Node.t) |}];
+  (* NOTE: Wow! It using fragment implicitly here is really cool! *)
+  Expect_test_helpers_core.require_does_raise (fun () -> test {|%{foo} %{bar}|});
+  [%expect
+    {| ("ppx_html expects to return a single html element, but found 2 top-level elements.") |}]
+;;
+
+let%expect_test "Many classes used at once" =
+  (* NOTE: I think this is fine. My gut reaction was that it should probably use
+     [Vdom.Attr.classes] instead, but I think that using [Vdom.Attr.class] is the same
+     behavior.
+
+     After double-double checking, it seems like it's not exactly 1:1 with what we
+     do in [virtual_dom]. In virtual_dom, using [Virtual_dom.Attr.classes] attempts
+     to combine the classes, which I think is maybe something we should attempt
+     here, although I still probably need to think more about this.
+  *)
+  test {|<div class="foo bar baz"></div>|};
+  [%expect
+    {|
+    Html_syntax.Node.div
+      ~attrs:[(Html_syntax.Attr.classes ["foo"; "bar"; "baz"] : Virtual_dom.Vdom.Attr.t)]
+      []
+    |}]
+;;
+
+let%expect_test "classes with substitutions" =
+  (* NOTE: I think this is fine. My gut reaction was that it should probably use
+     [Vdom.Attr.classes] instead, but I think that using [Vdom.Attr.class] is the same
+     behavior.
+
+     After double-double checking, it seems like it's not exactly 1:1 with what we
+     do in [virtual_dom]. In virtual_dom, using [Virtual_dom.Attr.classes] attempts
+     to combine the classes, which I think is maybe something we should attempt
+     here, although I still probably need to think more about this.
+  *)
+  test {|<div class="foo-%{"bar"}-baz fizz %{"other"}"></div>|};
+  [%expect
+    {|
+    Html_syntax.Node.div
+      ~attrs:[(Html_syntax.Attr.classes
+                 [[%string "foo-%{(\"bar\")}-baz"]; "fizz"; ("other" : string)] :
+             Virtual_dom.Vdom.Attr.t)] []
+    |}]
+;;
+
+let%expect_test "Complex-ish test case" =
+  test
+    {| <div class="menu-add-card" on_click=%{fun _ -> Effect.print_s [%message "capybaras are cool"] }>
+          %{title}
+          <span class_=pill class_=menu-add-card-verb>
+            %{Vdom.Node.text verb}
+          </span>
+          <span class_=menu-add-card-text>
+            %{Vdom.Node.text text}
+          </span>
+          %{help}
+        </div>
+        |};
+  [%expect
+    {|
+    Html_syntax.Node.div
+      ~attrs:[(Html_syntax.Attr.classes ["menu-add-card"] : Virtual_dom.Vdom.Attr.t);
+             (Html_syntax.Attr.on_click
+                (fun _ -> Effect.print_s ([%message "capybaras are cool"])) :
+             Virtual_dom.Vdom.Attr.t)]
+      [(title : Virtual_dom.Vdom.Node.t);
+      Html_syntax.Node.span
+        ~attrs:[(Html_syntax.Attr.class_ "pill" : Virtual_dom.Vdom.Attr.t);
+               (Html_syntax.Attr.class_ "menu-add-card-verb" : Virtual_dom.Vdom.Attr.t)]
+        [(Vdom.Node.text verb : Virtual_dom.Vdom.Node.t)];
+      Html_syntax.Node.span
+        ~attrs:[(Html_syntax.Attr.class_ "menu-add-card-text" : Virtual_dom.Vdom.Attr.t)]
+        [(Vdom.Node.text text : Virtual_dom.Vdom.Node.t)];
+      (help : Virtual_dom.Vdom.Node.t)]
+    |}]
+;;
+
+let%expect_test "Attrs that are OCaml keywords are special cased" =
+  test
+    {|
+    <div class="class" for="for" type="type" open
+    ></div>
+  |};
+  [%expect
+    {|
+    Html_syntax.Node.div
+      ~attrs:[(Html_syntax.Attr.classes ["class"] : Virtual_dom.Vdom.Attr.t);
+             (Html_syntax.Attr.for_ "for" : Virtual_dom.Vdom.Attr.t);
+             (Html_syntax.Attr.type_ "type" : Virtual_dom.Vdom.Attr.t);
+             (Html_syntax.Attr.open_ : Virtual_dom.Vdom.Attr.t)] []
+    |}]
+;;
+
+let%expect_test "Nodes that are OCaml keywords are not handled." =
+  (* NOTE: This one is doubly weird as the type signature does not expect a Vdom.Node.t
+     list so maybe it shouldn't be specialcased as it won't quite work. *)
+  test
+    {|
+    <lazy></lazy>
+  |};
+  [%expect {| Html_syntax.Node.lazy_ [] |}]
+;;
+
+let%expect_test "Disabled attribute" =
+  test
+    {|
+    <div disabled></div>
+  |};
+  [%expect
+    {|
+    Html_syntax.Node.div
+      ~attrs:[(Html_syntax.Attr.disabled : Virtual_dom.Vdom.Attr.t)] []
+    |}]
+;;
+
+let%expect_test "className is not special handled" =
+  test
+    {|
+    <div className="foo"></div>
+  |};
+  [%expect
+    {|
+    Html_syntax.Node.div
+      ~attrs:[(Html_syntax.Attr.className "foo" : Virtual_dom.Vdom.Attr.t)] []
+    |}]
+;;
+
+let%expect_test "Duplicate attribute names." =
+  test
+    {|
+    <div a="1" a="2"></div>
+  |};
+  (* How these are handled is deferred to the implementation of [?attrs]*)
+  [%expect
+    {|
+    Html_syntax.Node.div
+      ~attrs:[(Html_syntax.Attr.a "1" : Virtual_dom.Vdom.Attr.t);
+             (Html_syntax.Attr.a "2" : Virtual_dom.Vdom.Attr.t)] []
+    |}];
+  test
+    {|
+    <div class="foo" class="bar"></div>
+  |};
+  [%expect
+    {|
+    Html_syntax.Node.div
+      ~attrs:[(Html_syntax.Attr.classes ["foo"] : Virtual_dom.Vdom.Attr.t);
+             (Html_syntax.Attr.classes ["bar"] : Virtual_dom.Vdom.Attr.t)] []
+    |}]
+;;
+
+let%expect_test "Escaping of attribute strings" =
+  test
+    {|
+    <div no_quotes=1 with_quotes="2"></div>
+  |};
+  [%expect
+    {|
+    Html_syntax.Node.div
+      ~attrs:[(Html_syntax.Attr.no_quotes "1" : Virtual_dom.Vdom.Attr.t);
+             (Html_syntax.Attr.with_quotes "2" : Virtual_dom.Vdom.Attr.t)] []
+    |}];
+  (* This one handles escaped "\"" correctly. *)
+  test
+    {|
+     <div two="\"\"" one="\""></div>
+     |};
+  [%expect
+    {|
+    Html_syntax.Node.div
+      ~attrs:[(Html_syntax.Attr.two "\"\"" : Virtual_dom.Vdom.Attr.t);
+             (Html_syntax.Attr.one "\"" : Virtual_dom.Vdom.Attr.t)] []
+    |}]
+;;
+
+let%expect_test "ppx_html inside of ppx_html" =
+  test
+    {|<div no_quotes=1 with_quotes="2"> %{[%html{x|<p>hello</p>|x}]}</div>
+|};
+  (* NOTE: This is a limitation of the test harness, and not the
+     actual PPX. In ppx-land this test should fully expand, and can be tested
+     in a different way. This test only runs a single invocation of the PPX. *)
+  [%expect
+    {|
+    Html_syntax.Node.div
+      ~attrs:[(Html_syntax.Attr.no_quotes "1" : Virtual_dom.Vdom.Attr.t);
+             (Html_syntax.Attr.with_quotes "2" : Virtual_dom.Vdom.Attr.t)]
+      [Html_syntax.Node.text " ";
+      ([%html {x|<p>hello</p>|x}] : Virtual_dom.Vdom.Node.t)]
+    |}]
+;;
+
+let%expect_test "Childless HTML Tags" =
+  test
+    {|
+    <div>
+      Hello
+      <br/>
+      World!
+      <input type="checkbox"/>
+      <img src="./img.png"/>
+      <hr />
+    </div>
+  |};
+  [%expect
+    {|
+    Html_syntax.Node.div
+      [Html_syntax.Node.text " Hello ";
+      Html_syntax.Node.br ();
+      Html_syntax.Node.text " World! ";
+      Html_syntax.Node.input
+        ~attrs:[(Html_syntax.Attr.type_ "checkbox" : Virtual_dom.Vdom.Attr.t)] ();
+      Html_syntax.Node.img
+        ~attrs:[(Html_syntax.Attr.src "./img.png" : Virtual_dom.Vdom.Attr.t)] ();
+      Html_syntax.Node.hr ()]
+    |}]
+;;
+
+let%expect_test "Childless HTML Tags - need a closing slash" =
+  Expect_test_helpers_core.require_does_raise (fun () ->
+    test
+      {|
+    <div>
+      Hello
+      <br>
+      World!
+      <input type="checkbox">
+      <img src="./img.png">
+      <hr>
+    </div>
+  |});
+  [%expect {| ("Expected closing tag </hr>, got </div>") |}]
+;;
+
+let%expect_test "Sexp for debugging" =
+  (* NOTE: This is only demonstrates existing behavior. I think it'd be cool to
+     be able to put things like sexp_for_debugging. Maybe it could be something like:
+
+     [%html {|<div>%{(foo : string list)}</div>|}], although also not super hyped about it. *)
+  test
+    {|
+    <%{Vdom.Node.sexp_for_debugging}>
+    </>
+  |};
+  [%expect {| Vdom.Node.sexp_for_debugging [] |}]
+;;
+
+let%expect_test "Quoted strings inside of element's body work" =
+  test {| "hello" |};
+  [%expect {| Html_syntax.Node.text " \"hello\" " |}];
+  test {| <div>"hello world"</div> |};
+  [%expect {| Html_syntax.Node.div [Html_syntax.Node.text "\"hello world\""] |}];
+  test {| <div>"hello world"</div> |};
+  [%expect {| Html_syntax.Node.div [Html_syntax.Node.text "\"hello world\""] |}]
+;;
+
+let%expect_test "Other forms of html escaping" =
+  test {|<div>& " ' // </div>|};
+  [%expect {| Html_syntax.Node.div [Html_syntax.Node.text "& \" ' // "] |}]
+;;
+
+let%expect_test "Comments" =
+  (* NOTE: This only documents current behavior and is not necessary a bug. *)
+  (* HTML comments do not work. It would be cool if it gave a more descriptive error
+     message on the misparse.  *)
+  test
+    {|
+    <div>
+      <div></div>
+      <!--This is a comment. -->
+      <div></div>
+    </div>
+  |};
+  [%expect {| Html_syntax.Node.div [Html_syntax.Node.div []; Html_syntax.Node.div []] |}];
+  (* Embedded OCaml comments kind of work. *)
+  test
+    {|
+    <div>
+      <div></div>
+      %{(* Comment *) Vdom.Node.none}
+      <div></div>
+    </div>
+  |};
+  [%expect
+    {|
+    Html_syntax.Node.div
+      [Html_syntax.Node.div [];
+      (Vdom.Node.none : Virtual_dom.Vdom.Node.t);
+      Html_syntax.Node.div []]
+    |}]
+;;
+
+let%expect_test "Children" =
+  (* NOTE: This only documents current behavior and is not necessary a bug. *)
+  test
+    {|
+    <div>
+      <input/>
+      <div/>
+    </div>
+  |};
+  [%expect
+    {| Html_syntax.Node.div [Html_syntax.Node.input (); Html_syntax.Node.div ()] |}]
+;;
+
+let%expect_test "Modul on a tag" =
+  test {|<%{EXPR#Foo}></>|};
+  [%expect {| Foo.to_string EXPR [] |}]
+;;

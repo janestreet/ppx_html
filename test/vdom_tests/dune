@@ -1,0 +1,7 @@
+(library
+ (name ppx_html_vdom_tests)
+ (public_name ppx_html.vdom_tests)
+ (libraries core virtual_dom virtual_dom.vdom_test_helpers
+   virtual_dom.css_gen)
+ (preprocess
+  (pps ppx_html ppx_jane)))
