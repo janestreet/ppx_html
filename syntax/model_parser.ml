@@ -105,7 +105,7 @@ let ocaml_expression ({ txt; loc } : string Loc.t) =
 
 let with_loc' ~locs f =
   let%map start = pos
-  and f = f
+  and f
   and end_ = pos in
   let loc = Locations.location locs ~start ~end_ in
   f loc
@@ -114,7 +114,7 @@ let with_loc' ~locs f =
 let with_loc ~locs txt =
   with_loc'
     ~locs
-    (let%map txt = txt in
+    (let%map txt in
      fun loc -> { txt; loc })
 ;;
 
@@ -129,7 +129,7 @@ let fail_but_we_know_location ~exn ~loc message =
 ;;
 
 let fail ?start ?end_ ~locs ?exn message =
-  let%bind pos = pos in
+  let%bind pos in
   let start = Option.value start ~default:pos in
   let end_ = Option.value end_ ~default:pos in
   let location = Locations.location locs ~start ~end_ in
@@ -213,6 +213,7 @@ let parse_intepolation_kind : Model.Interpolation_kind.t t =
     [ string "%{" *> return Model.Interpolation_kind.Normal
     ; string "?{" *> return Model.Interpolation_kind.Option
     ; string "*{" *> return Model.Interpolation_kind.List
+    ; string "#{" *> return Model.Interpolation_kind.String
     ]
 ;;
 
@@ -302,7 +303,7 @@ let parse_html_token ~locs : string Loc.t Angstrom.t =
 let only_normal_interpolation_allowed ~locs ~interpolation_kind expr =
   match interpolation_kind with
   | Interpolation_kind.Normal -> return expr
-  | (Option | List) as kind ->
+  | (Option | List | String) as kind ->
     let normal_interpolation = "%{}" in
     fail
       ~locs
@@ -316,7 +317,8 @@ let parse_quote_expr ~locs =
 ;;
 
 let interpolation_case =
-  choice [ "%{" => `Expression; "?{" => `Expression; "*{" => `Expression ]
+  choice
+    [ "%{" => `Expression; "?{" => `Expression; "*{" => `Expression; "#{" => `Expression ]
 ;;
 
 let parse_quote ~locs : Model.Quote.t Angstrom.t =
@@ -623,6 +625,7 @@ let string_until_interpolation_or_segment =
         ; "%{" => `Finish
         ; "?{" => `Finish
         ; "*{" => `Finish
+        ; "#{" => `Finish
         ; "<" => `Finish
         ; return `Consume
         ]

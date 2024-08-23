@@ -197,3 +197,51 @@ let%test_module "Using interpolation characters" =
     ;;
   end)
 ;;
+
+let%test_module "#{} - really basic sanity tests" =
+  (module struct
+    let%expect_test "Hashtag mark - node" =
+      test {|<div>#{EXPR}</div>|};
+      [%expect
+        {|
+        Html_syntax.Node.div
+          [(Html_syntax.Node.text ((EXPR)[@merlin.focus ]) : Virtual_dom.Vdom.Node.t)]
+        |}];
+      test {|<div>Hello #{EXPR}!</div>|};
+      [%expect
+        {|
+        Html_syntax.Node.div
+          [Html_syntax.Node.text "Hello ";
+          (Html_syntax.Node.text ((EXPR)[@merlin.focus ]) : Virtual_dom.Vdom.Node.t);
+          Html_syntax.Node.text "!"]
+        |}]
+    ;;
+
+    let%expect_test "Hashtag mark - attr" =
+      Expect_test_helpers_core.require_does_raise (fun () -> test {|<div #{EXPR}></div>|});
+      [%expect {| ("#{} string interpolation is not allowed in attributes") |}]
+    ;;
+
+    let%expect_test "Question mark - node + modul" =
+      Expect_test_helpers_core.require_does_raise (fun () ->
+        test {|<div>#{EXPR#Foo}</div>|});
+      [%expect {| ("#{} string intepolation cannot have a module identifier") |}]
+    ;;
+
+    let%expect_test "Hashtag mark - attr + module" =
+      Expect_test_helpers_core.require_does_raise (fun () ->
+        test {|<div #{EXPR#Foo}></div>|});
+      [%expect {| ("#{} string interpolation is not allowed in attributes") |}]
+    ;;
+
+    let%expect_test "invalid interpolation locations" =
+      Expect_test_helpers_core.require_does_raise (fun () -> test {|<#{EXPR}></>|});
+      [%expect
+        {| ("string (#{}) interpolation is not allowed here, only %{} interpolation is allowed in this context.") |}];
+      Expect_test_helpers_core.require_does_raise (fun () ->
+        test {|<div foo=#{EXPR}></div>|});
+      [%expect
+        {| ("string (#{}) interpolation is not allowed here, only %{} interpolation is allowed in this context.") |}]
+    ;;
+  end)
+;;

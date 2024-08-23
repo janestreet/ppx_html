@@ -31,6 +31,8 @@ module Type = struct
     =
     let loc = expression.pexp_loc in
     match interpolation_kind, module_ with
+    | String, _ ->
+      Location.raise_errorf ~loc "#{} string interpolation is not allowed in attributes"
     | Normal, None -> (* %{EXPR} *) expression
     | Normal, Some { loc = module_loc; txt = module_ } ->
       (* %{EXPR#Module_} *)
@@ -82,6 +84,13 @@ module Type = struct
     =
     let loc = expression.pexp_loc in
     match interpolation_kind, module_ with
+    | String, Some module_ ->
+      Location.raise_errorf
+        ~loc:module_.loc
+        "#{} string intepolation cannot have a module identifier"
+    | String, None ->
+      let to_text = Shared.node_fn ~loc ~html_syntax_module "text" in
+      [%expr [%e to_text] [%e Merlin_helpers.focus_expression expression]]
     | Normal, None ->
       (match expression.pexp_desc with
        | Pexp_constant (Pconst_string _) ->

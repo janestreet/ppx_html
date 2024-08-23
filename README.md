@@ -55,6 +55,7 @@ familiar syntax:
 | `{%html|<div>%{EXPR#Foo}</div>|}`  | Similar to ppx_string, will call [Vdom.Node.text (Foo.to_string EXPR)]                   |
 | `{%html|<div>*{EXPR}</div>|}`      | `EXPR` is expected to be `Vdom.Node.t list`                                              |
 | `{%html|<div>?{EXPR}</div>|}`      | `EXPR` is expected to be `Vdom.Node.t option`                                            |
+| `{%html|<div>#{EXPR}</div>|}`      | `EXPR` is expected to be `string`                                                        |
 | `{%html|<div>%{"a string"}</div>|}`| Will call [ Vdom.Node.text "a string" ]                                                  |
 | `<TAG ATTRS...> INNER </TAG>`      | TAG must be `Vdom.Node.TAG : ?attrs:Vdom.Attr.t list -> Vdom.Node.t list -> Vdom.Node.t` |
 | `<TAG ATTRS.../>`                  | TAG must be `Vdom.Node.TAG : ?attrs:Vdom.Attr.t list -> unit -> Vdom.Node.t`             |

@@ -9,5 +9,5 @@ open! Base
 *)
 
 module List : sig
-  val map : 'a list -> f:('a -> 'b) -> 'b list
+  val map : 'a list -> f:local_ ('a -> 'b) -> 'b list
 end
