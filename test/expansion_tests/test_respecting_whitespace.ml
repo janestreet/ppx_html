@@ -25,6 +25,8 @@ let%expect_test "Whitespace is respected (no whitespace)" =
   |};
   [%expect
     {|
+    same output between ppx_html and ppx_html_kernel
+
     Html_syntax.Node.div
       [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
       Html_syntax.Node.text "world "]
@@ -40,6 +42,8 @@ let%expect_test "Whitepace is respected (whitespace exists and is not eaten up)"
   |};
   [%expect
     {|
+    same output between ppx_html and ppx_html_kernel
+
     Html_syntax.Node.div
       [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
       Html_syntax.Node.text " world "]
@@ -56,6 +60,8 @@ world
 |};
   [%expect
     {|
+    same output between ppx_html and ppx_html_kernel
+
     Html_syntax.Node.div
       [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
       Html_syntax.Node.text " world "]
@@ -71,6 +77,8 @@ let%test_module "Handling of whitespace around non-text tags" =
 |};
       [%expect
         {|
+        same output between ppx_html and ppx_html_kernel
+
         Html_syntax.Node.div
           [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
           Html_syntax.Node.span [Html_syntax.Node.text " world"];
@@ -85,6 +93,8 @@ let%test_module "Handling of whitespace around non-text tags" =
 |};
       [%expect
         {|
+        same output between ppx_html and ppx_html_kernel
+
         Html_syntax.Node.div
           [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
           Html_syntax.Node.span [Html_syntax.Node.text "world"];
@@ -99,6 +109,8 @@ let%test_module "Handling of whitespace around non-text tags" =
 |};
       [%expect
         {|
+        same output between ppx_html and ppx_html_kernel
+
         Html_syntax.Node.div
           [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
           Html_syntax.Node.text " ";
@@ -117,6 +129,8 @@ let%test_module "Handling of whitespace around non-text tags" =
 |};
       [%expect
         {|
+        same output between ppx_html and ppx_html_kernel
+
         Html_syntax.Node.div
           [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
           Html_syntax.Node.span [Html_syntax.Node.text "world"]]

@@ -36,6 +36,9 @@ let%expect_test "Bonsai's hello world HTML" =
   |};
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     Html_syntax.Node.html
       [Html_syntax.Node.head
          [Html_syntax.Node.meta
@@ -49,6 +52,28 @@ let%expect_test "Bonsai's hello world HTML" =
       Html_syntax.Node.body
         [Html_syntax.Node.div
            ~attrs:[(Html_syntax.Attr.id "app" : Virtual_dom.Vdom.Attr.t)] []]]
+
+    PPX_HTML_KERNEL (diff):
+    -1,13 +1,8
+      Html_syntax.Node.html
+        [Html_syntax.Node.head
+    -|     [Html_syntax.Node.meta
+    -|        ~attrs:[(Html_syntax.Attr.charset "UTF-8" : Virtual_dom.Vdom.Attr.t)]
+    -|        ();
+    +|     [Html_syntax.Node.meta ~attrs:[Html_syntax.Attr.charset "UTF-8"] ();
+    -|     Html_syntax.Node.title [Html_syntax.Node.text "Hello, Bonsai!"];
+    -|     Html_syntax.Node.script
+    -|       ~attrs:[(Html_syntax.Attr.defer : Virtual_dom.Vdom.Attr.t);
+    -|              (Html_syntax.Attr.src "main.bc.js" : Virtual_dom.Vdom.Attr.t)]
+    -|       []];
+    +|     Html_syntax.Node.title [Html_syntax.Node.text "Hello, Bonsai!"];
+    +|     Html_syntax.Node.script
+    +|       ~attrs:[Html_syntax.Attr.defer; Html_syntax.Attr.src "main.bc.js"] []];
+    -|  Html_syntax.Node.body
+    -|    [Html_syntax.Node.div
+    -|       ~attrs:[(Html_syntax.Attr.id "app" : Virtual_dom.Vdom.Attr.t)] []]]
+    +|  Html_syntax.Node.body
+    +|    [Html_syntax.Node.div ~attrs:[Html_syntax.Attr.id "app"] []]]
     |}];
   (* NOTE: this is the instance that did not work (the difference is the <meta> element): *)
   Expect_test_helpers_core.require_does_raise (fun () ->
@@ -91,6 +116,9 @@ let%expect_test "Highcharts example" =
   |};
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     Html_syntax.Node.html
       ~attrs:[(Html_syntax.Attr.lang "en" : Virtual_dom.Vdom.Attr.t)]
       [Html_syntax.Node.head
@@ -135,5 +163,63 @@ let%expect_test "Highcharts example" =
           ~attrs:[(Html_syntax.Attr.href "pie_chart.html" : Virtual_dom.Vdom.Attr.t)]
           [Html_syntax.Node.text "Pie chart"];
         Html_syntax.Node.br ()]]
+
+    PPX_HTML_KERNEL (diff):
+    -1,44 +1,34
+    -|Html_syntax.Node.html
+    -|  ~attrs:[(Html_syntax.Attr.lang "en" : Virtual_dom.Vdom.Attr.t)]
+    +|Html_syntax.Node.html ~attrs:[Html_syntax.Attr.lang "en"]
+        [Html_syntax.Node.head
+    -|     [Html_syntax.Node.meta
+    -|        ~attrs:[(Html_syntax.Attr.charset "UTF-8" : Virtual_dom.Vdom.Attr.t)]
+    -|        ()];
+    +|     [Html_syntax.Node.meta ~attrs:[Html_syntax.Attr.charset "UTF-8"] ()];
+        Html_syntax.Node.body
+          [Html_syntax.Node.h2 [Html_syntax.Node.text "Examples"];
+    -|    Html_syntax.Node.a
+    -|      ~attrs:[(Html_syntax.Attr.href "simple.html" : Virtual_dom.Vdom.Attr.t)]
+    +|    Html_syntax.Node.a ~attrs:[Html_syntax.Attr.href "simple.html"]
+            [Html_syntax.Node.text "Simple"];
+          Html_syntax.Node.br ();
+    -|    Html_syntax.Node.a
+    -|      ~attrs:[(Html_syntax.Attr.href "simple_bonsai.html" : Virtual_dom.Vdom.Attr.t)]
+    +|    Html_syntax.Node.a ~attrs:[Html_syntax.Attr.href "simple_bonsai.html"]
+            [Html_syntax.Node.text "Simple Bonsai"];
+          Html_syntax.Node.br ();
+    -|    Html_syntax.Node.a
+    -|      ~attrs:[(Html_syntax.Attr.href "bar_chart.html" : Virtual_dom.Vdom.Attr.t)]
+    +|    Html_syntax.Node.a ~attrs:[Html_syntax.Attr.href "bar_chart.html"]
+            [Html_syntax.Node.text "Bar chart"];
+          Html_syntax.Node.br ();
+    -|    Html_syntax.Node.a
+    -|      ~attrs:[(Html_syntax.Attr.href "custom_zoom.html" : Virtual_dom.Vdom.Attr.t)]
+    +|    Html_syntax.Node.a ~attrs:[Html_syntax.Attr.href "custom_zoom.html"]
+            [Html_syntax.Node.text "Custom zoom"];
+          Html_syntax.Node.br ();
+    -|    Html_syntax.Node.a
+    -|      ~attrs:[(Html_syntax.Attr.href "custom_tooltip.html" : Virtual_dom.Vdom.Attr.t)]
+    +|    Html_syntax.Node.a ~attrs:[Html_syntax.Attr.href "custom_tooltip.html"]
+            [Html_syntax.Node.text "Custom tooltip"];
+          Html_syntax.Node.br ();
+          Html_syntax.Node.a
+    -|      ~attrs:[(Html_syntax.Attr.href "custom_tooltip_series.html" : Virtual_dom.Vdom.Attr.t)]
+    +|      ~attrs:[Html_syntax.Attr.href "custom_tooltip_series.html"]
+            [Html_syntax.Node.text "Custom series specific tooltip"];
+          Html_syntax.Node.br ();
+    -|    Html_syntax.Node.a
+    -|      ~attrs:[(Html_syntax.Attr.href "heatmap.html" : Virtual_dom.Vdom.Attr.t)]
+    +|    Html_syntax.Node.a ~attrs:[Html_syntax.Attr.href "heatmap.html"]
+            [Html_syntax.Node.text "Heatmap"];
+          Html_syntax.Node.br ();
+          Html_syntax.Node.a
+    -|      ~attrs:[(Html_syntax.Attr.href "point_click_callback.html" : Virtual_dom.Vdom.Attr.t)]
+    +|      ~attrs:[Html_syntax.Attr.href "point_click_callback.html"]
+            [Html_syntax.Node.text "Point click callback"];
+          Html_syntax.Node.br ();
+    -|    Html_syntax.Node.a
+    -|      ~attrs:[(Html_syntax.Attr.href "pie_chart.html" : Virtual_dom.Vdom.Attr.t)]
+    +|    Html_syntax.Node.a ~attrs:[Html_syntax.Attr.href "pie_chart.html"]
+            [Html_syntax.Node.text "Pie chart"];
+          Html_syntax.Node.br ()]]
     |}]
 ;;

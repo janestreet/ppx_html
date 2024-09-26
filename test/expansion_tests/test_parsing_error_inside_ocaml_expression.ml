@@ -37,7 +37,16 @@ let%expect_test "Syntax error inside of OCaml expression" =
       </div>|};
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     Html_syntax.Node.div
       [(Vdom.Node.text ("hello" ^ "world") : Virtual_dom.Vdom.Node.t)]
+
+    PPX_HTML_KERNEL (diff):
+    -1,2 +1,1
+    -|Html_syntax.Node.div
+    -|  [(Vdom.Node.text ("hello" ^ "world") : Virtual_dom.Vdom.Node.t)]
+    +|Html_syntax.Node.div [Vdom.Node.text ("hello" ^ "world")]
     |}]
 ;;

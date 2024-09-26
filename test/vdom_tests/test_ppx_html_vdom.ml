@@ -236,3 +236,10 @@ let%expect_test "Attr option interpolation (with module)" =
   test {%html|<div ?{attr1#Foo} ?{attr2#Foo}></div>|};
   [%expect {| <div custom-attr-an_attr=""> </div> |}]
 ;;
+
+let%expect_test "string interpolation" =
+  let capy = "Capybara"
+  and animal = "rodent" in
+  test {%html|<div>#{capy}'s are the world's largest #{animal}</div>|};
+  [%expect {| <div> Capybara 's are the world's largest  rodent </div> |}]
+;;

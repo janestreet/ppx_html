@@ -4,8 +4,9 @@ module Interpolation_kind : sig
   type t =
     | Normal (* %{} *)
     | Option (* ?{} *)
-    | List
-  (* *{} *) [@@deriving sexp_of]
+    | List (* *{} *)
+    | String (* #{} *)
+  [@@deriving sexp_of]
 
   val to_string : t -> string
 end

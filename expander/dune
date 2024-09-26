@@ -1,0 +1,6 @@
+(library
+ (name ppx_html_expander)
+ (public_name ppx_html.expander)
+ (libraries core compiler-libs.common ppxlib ppx_html_syntax)
+ (preprocess
+  (pps ppx_jane ppxlib.metaquot ppxlib.traverse)))

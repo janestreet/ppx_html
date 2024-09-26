@@ -3,17 +3,32 @@ open! Test_utils
 
 let%expect_test "Literal key" =
   test {|<div key=1234></div>|};
-  [%expect {| Html_syntax.Node.div ~key:"1234" [] |}]
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Html_syntax.Node.div ~key:"1234" []
+    |}]
 ;;
 
 let%expect_test "Explicit quoted key" =
   test {|<div key="a-key"></div>|};
-  [%expect {| Html_syntax.Node.div ~key:"a-key" [] |}]
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Html_syntax.Node.div ~key:"a-key" []
+    |}]
 ;;
 
 let%expect_test "Interpolated key" =
   test {|<div key=%{SOME_OCAML_EXPR}></div>|};
-  [%expect {| Html_syntax.Node.div ~key:SOME_OCAML_EXPR [] |}]
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Html_syntax.Node.div ~key:SOME_OCAML_EXPR []
+    |}]
 ;;
 
 let%expect_test "Two keys provided results in error" =
@@ -29,10 +44,20 @@ let%expect_test "key needs a value" =
 
 let%expect_test "Interpolated key with module interpolation" =
   test {|<div key=%{SOME_OCAML_EXPR#Foo}></div>|};
-  [%expect {| Html_syntax.Node.div ~key:(Foo.to_string SOME_OCAML_EXPR) [] |}]
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Html_syntax.Node.div ~key:(Foo.to_string SOME_OCAML_EXPR) []
+    |}]
 ;;
 
 let%expect_test "Interpolated tag and interpolated key." =
   test {|<%{INTERPOLATED_TAG} key=%{INTERPOLATED_KEY}></>|};
-  [%expect {| INTERPOLATED_TAG ~key:INTERPOLATED_KEY [] |}]
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    INTERPOLATED_TAG ~key:INTERPOLATED_KEY []
+    |}]
 ;;

@@ -10,15 +10,16 @@ module Type = struct
     | Attr of { interpolation_kind : Interpolation_kind.t }
     | Node of { interpolation_kind : Interpolation_kind.t }
 
-  let core_type ~loc t : core_type option =
-    match t with
-    | String -> Some [%type: string]
-    | Attr { interpolation_kind = _ } ->
+  let core_type ~loc ~(runtime_kind : Runtime_kind.t) t : core_type option =
+    match t, runtime_kind with
+    | String, (Js_of_ocaml | Kernel) -> Some [%type: string]
+    | Attr { interpolation_kind = _ }, (Js_of_ocaml | Kernel) ->
       (* This is a bit of a hack. We do not want to add a type for Vdom.Attr.t as this is
          already added elsewhere, and also adding it here results in a double Vdom.Attr.t
          annotation. *)
       None
-    | Node { interpolation_kind = _ } -> Some (Shared.node_t_type ~loc)
+    | Node { interpolation_kind = _ }, Js_of_ocaml -> Some (Shared.node_t_type ~loc)
+    | Node { interpolation_kind = _ }, Kernel -> None
   ;;
 
   let call_f ~loc fn_name = C.pexp_ident ~loc { txt = Longident.parse fn_name; loc }
@@ -31,6 +32,8 @@ module Type = struct
     =
     let loc = expression.pexp_loc in
     match interpolation_kind, module_ with
+    | String, _ ->
+      Location.raise_errorf ~loc "#{} string interpolation is not allowed in attributes"
     | Normal, None -> (* %{EXPR} *) expression
     | Normal, Some { loc = module_loc; txt = module_ } ->
       (* %{EXPR#Module_} *)
@@ -82,6 +85,13 @@ module Type = struct
     =
     let loc = expression.pexp_loc in
     match interpolation_kind, module_ with
+    | String, Some module_ ->
+      Location.raise_errorf
+        ~loc:module_.loc
+        "#{} string intepolation cannot have a module identifier"
+    | String, None ->
+      let to_text = Shared.node_fn ~loc ~html_syntax_module "text" in
+      [%expr [%e to_text] [%e Merlin_helpers.focus_expression expression]]
     | Normal, None ->
       (match expression.pexp_desc with
        | Pexp_constant (Pconst_string _) ->
@@ -128,7 +138,7 @@ module Type = struct
   ;;
 end
 
-let expr ?type_ ~html_syntax_module (expr : Model.Expr.t) =
+let expr ?type_ ~html_syntax_module ~runtime_kind (expr : Model.Expr.t) =
   let loc = expr.loc in
   let t = expr.expr in
   let t =
@@ -142,7 +152,7 @@ let expr ?type_ ~html_syntax_module (expr : Model.Expr.t) =
     match type_ with
     | None -> t
     | Some type_ ->
-      (match Type.core_type ~loc type_ with
+      (match Type.core_type ~loc ~runtime_kind type_ with
        | None -> t
        | Some type_ -> [%expr ([%e t] : [%t type_])])
   in
@@ -158,9 +168,9 @@ let with_immediate_quote ({ txt; loc } : Model.Quote.t) ~f =
   loop txt ~f:(fun txt -> f { txt; loc })
 ;;
 
-let quote ~html_syntax_module = function
+let quote ~html_syntax_module ~runtime_kind = function
   | { txt = [ Model.Quote.Elt.Expr e ]; loc = _ } ->
-    expr e ~html_syntax_module ~type_:String
+    expr ~runtime_kind e ~html_syntax_module ~type_:String
   | quote ->
     with_immediate_quote quote ~f:(fun quote ->
       let loc = quote.loc in

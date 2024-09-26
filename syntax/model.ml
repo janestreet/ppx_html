@@ -4,13 +4,15 @@ module Interpolation_kind = struct
   type t =
     | Normal (* %{} *)
     | Option (* ?{} *)
-    | List
-  (* *{} *) [@@deriving sexp_of]
+    | List (* *{} *)
+    | String (* #{} *)
+  [@@deriving sexp_of]
 
   let to_string = function
     | Normal -> "percent-based (%{})"
     | Option -> "option (?{})"
     | List -> "list (*{})"
+    | String -> "string (#{})"
   ;;
 end
 
@@ -235,6 +237,7 @@ include struct
     | Normal
     | Option
     | List
+    | String
 
   and string_relative_location = String_relative_location.t =
     { start : int
