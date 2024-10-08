@@ -68,73 +68,71 @@ world
     |}]
 ;;
 
-let%test_module "Handling of whitespace around non-text tags" =
-  (module struct
-    let%expect_test "This is ok" =
-      test
-        {|
+module%test [@name "Handling of whitespace around non-text tags"] _ = struct
+  let%expect_test "This is ok" =
+    test
+      {|
 <div><span>Hello</span><span> world</span>world</div>
 |};
-      [%expect
-        {|
-        same output between ppx_html and ppx_html_kernel
+    [%expect
+      {|
+      same output between ppx_html and ppx_html_kernel
 
-        Html_syntax.Node.div
-          [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
-          Html_syntax.Node.span [Html_syntax.Node.text " world"];
-          Html_syntax.Node.text "world"]
-        |}]
-    ;;
+      Html_syntax.Node.div
+        [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
+        Html_syntax.Node.span [Html_syntax.Node.text " world"];
+        Html_syntax.Node.text "world"]
+      |}]
+  ;;
 
-    let%expect_test "This is ok" =
-      test
-        {|
+  let%expect_test "This is ok" =
+    test
+      {|
 <div><span>Hello</span><span>world</span>world</div>
 |};
-      [%expect
-        {|
-        same output between ppx_html and ppx_html_kernel
+    [%expect
+      {|
+      same output between ppx_html and ppx_html_kernel
 
-        Html_syntax.Node.div
-          [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
-          Html_syntax.Node.span [Html_syntax.Node.text "world"];
-          Html_syntax.Node.text "world"]
-        |}]
-    ;;
+      Html_syntax.Node.div
+        [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
+        Html_syntax.Node.span [Html_syntax.Node.text "world"];
+        Html_syntax.Node.text "world"]
+      |}]
+  ;;
 
-    let%expect_test {|regression: spaces between two spans shouldn't be trimmed|} =
-      test
-        {|
+  let%expect_test {|regression: spaces between two spans shouldn't be trimmed|} =
+    test
+      {|
 <div><span>Hello</span> <span>world</span>world</div>
 |};
-      [%expect
-        {|
-        same output between ppx_html and ppx_html_kernel
+    [%expect
+      {|
+      same output between ppx_html and ppx_html_kernel
 
-        Html_syntax.Node.div
-          [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
-          Html_syntax.Node.text " ";
-          Html_syntax.Node.span [Html_syntax.Node.text "world"];
-          Html_syntax.Node.text "world"]
-        |}]
-    ;;
+      Html_syntax.Node.div
+        [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
+        Html_syntax.Node.text " ";
+        Html_syntax.Node.span [Html_syntax.Node.text "world"];
+        Html_syntax.Node.text "world"]
+      |}]
+  ;;
 
-    let%expect_test {|newlines between two elements are ignored|} =
-      test
-        {|
+  let%expect_test {|newlines between two elements are ignored|} =
+    test
+      {|
 <div>
   <span>Hello</span>
   <span>world</span>
 </div>
 |};
-      [%expect
-        {|
-        same output between ppx_html and ppx_html_kernel
+    [%expect
+      {|
+      same output between ppx_html and ppx_html_kernel
 
-        Html_syntax.Node.div
-          [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
-          Html_syntax.Node.span [Html_syntax.Node.text "world"]]
-        |}]
-    ;;
-  end)
-;;
+      Html_syntax.Node.div
+        [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
+        Html_syntax.Node.span [Html_syntax.Node.text "world"]]
+      |}]
+  ;;
+end

@@ -67,7 +67,7 @@ let%expect_test "Tag interpolation" =
       |};
   [%expect
     {|
-    <div class="ppx_css_anonymous_class_hash_replaced_in_test ppx_css_anonymous_class_hash_replaced_in_test"
+    <div class="test_ppx_html_vdom__inline_class_hash_replaced_in_test test_ppx_html_vdom__inline_class_hash_replaced_in_test"
          custom-css-vars=((--ppx_css_anonymous_var_1_hash_replaced_in_test 1.00rem))>
       <h1> Hello World </h1>
     </div>
@@ -94,7 +94,7 @@ let%expect_test "Attribute interpolation" =
   let tomato = {%css|background-color: tomato;|} in
   test {%html|<div src=%{url} %{tomato}></div>|};
   [%expect
-    {| <div src="URL" class="ppx_css_anonymous_class_hash_replaced_in_test"> </div> |}]
+    {| <div src="URL" class="test_ppx_html_vdom__inline_class_hash_replaced_in_test"> </div> |}]
 ;;
 
 let%expect_test "Node list interpolation" =
@@ -223,7 +223,8 @@ let%expect_test "Attr option interpolation" =
   let attr1 = None in
   let attr2 = Some {%css|background-color: tomato;|} in
   test {%html|<div ?{attr1} ?{attr2}></div>|};
-  [%expect {| <div class="ppx_css_anonymous_class_hash_replaced_in_test"> </div> |}]
+  [%expect
+    {| <div class="test_ppx_html_vdom__inline_class_hash_replaced_in_test"> </div> |}]
 ;;
 
 let%expect_test "Attr option interpolation (with module)" =
