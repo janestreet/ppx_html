@@ -34,7 +34,7 @@ let experimental_feature_checker ~loc:_ =
   end
 ;;
 
-let declare name =
+let extension ~name ~runtime_kind =
   Extension.declare_with_path_arg
     name
     Extension.Context.expression
@@ -52,10 +52,6 @@ let declare name =
       then
         List.iter model ~f:(fun node ->
           (ignore : Model.Node.t -> unit) ((experimental_feature_checker ~loc)#node node));
-      Model_code_gen.code ~loc:outer_loc ~html_syntax_module model
+      Model_code_gen.code ~loc:outer_loc ~html_syntax_module ~runtime_kind model
       |> loc_ghoster#expression)
-;;
-
-let () =
-  Ppxlib.Driver.register_transformation "ppx_html" ~extensions:[ declare "ppx_html.html" ]
 ;;

@@ -5,6 +5,8 @@ let%expect_test "HTML Quote escaping is handled correctly (implicit)" =
   test {|<div>Capybara's are the world's largest living rodent.</div>|};
   [%expect
     {|
+    same output between ppx_html and ppx_html_kernel
+
     Html_syntax.Node.div
       [Html_syntax.Node.text "Capybara's are the world's largest living rodent."]
     |}]
@@ -16,6 +18,8 @@ let%expect_test "HTML Quote escaping is handled correctly (implicit)" =
   test {|<div>Capybaras are the world&quot;s largest living rodent.</div>|};
   [%expect
     {|
+    same output between ppx_html and ppx_html_kernel
+
     Html_syntax.Node.div
       [Html_syntax.Node.text
          "Capybaras are the world&quot;s largest living rodent."]
@@ -29,6 +33,8 @@ let%expect_test "HTML Quote escaping is handled correctly (explicit)" =
   test {|<div>Capybaras are the world&nbsp;s largest living rodent.</div>|};
   [%expect
     {|
+    same output between ppx_html and ppx_html_kernel
+
     Html_syntax.Node.div
       [Html_syntax.Node.text
          "Capybaras are the world&nbsp;s largest living rodent."]

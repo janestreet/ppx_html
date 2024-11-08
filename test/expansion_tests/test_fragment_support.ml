@@ -3,7 +3,12 @@ open Test_utils
 
 let%expect_test "Fragment support" =
   test {|<></>|};
-  [%expect {| Html_syntax.Node.fragment [] |}]
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Html_syntax.Node.fragment []
+    |}]
 ;;
 
 let%expect_test "Fragment with attributes results in an error." =
@@ -19,6 +24,8 @@ let%expect_test "Fragment support - does not get confused when interpolated tags
   test {|<><%{EXPR}><><div></div></></><%{EXPR2}></></>|};
   [%expect
     {|
+    same output between ppx_html and ppx_html_kernel
+
     Html_syntax.Node.fragment
       [EXPR [Html_syntax.Node.fragment [Html_syntax.Node.div []]]; EXPR2 []]
     |}]

@@ -5,8 +5,17 @@ let%expect_test "basic expansion" =
   test {|<div tailwind="bg-white"></div>|};
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     Html_syntax.Node.div
       ~attrs:[([%tailwind "bg-white"] : Virtual_dom.Vdom.Attr.t)] []
+
+    PPX_HTML_KERNEL (diff):
+    -1,2 +1,1
+    -|Html_syntax.Node.div
+    -|  ~attrs:[([%tailwind "bg-white"] : Virtual_dom.Vdom.Attr.t)] []
+    +|Html_syntax.Node.div ~attrs:[Html_syntax.Attr.tailwind "bg-white"] []
     |}]
 ;;
 
@@ -14,9 +23,19 @@ let%expect_test "multiple classes" =
   test {|<div tailwind="bg-white bg-black foo bar baz"></div>|};
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     Html_syntax.Node.div
       ~attrs:[([%tailwind "bg-white bg-black foo bar baz"] : Virtual_dom.Vdom.Attr.t)]
       []
+
+    PPX_HTML_KERNEL (diff):
+    -1,3 +1,2
+      Html_syntax.Node.div
+    -|  ~attrs:[([%tailwind "bg-white bg-black foo bar baz"] : Virtual_dom.Vdom.Attr.t)]
+    -|  []
+    +|  ~attrs:[Html_syntax.Attr.tailwind "bg-white bg-black foo bar baz"] []
     |}]
 ;;
 
@@ -24,9 +43,20 @@ let%expect_test "multiple tailwind attrs" =
   test {|<div tailwind="bg-white" tailwind="bg-white foo bar baz"></div>|};
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     Html_syntax.Node.div
       ~attrs:[([%tailwind "bg-white"] : Virtual_dom.Vdom.Attr.t);
              ([%tailwind "bg-white foo bar baz"] : Virtual_dom.Vdom.Attr.t)] []
+
+    PPX_HTML_KERNEL (diff):
+    -1,3 +1,3
+      Html_syntax.Node.div
+    -|  ~attrs:[([%tailwind "bg-white"] : Virtual_dom.Vdom.Attr.t);
+    -|         ([%tailwind "bg-white foo bar baz"] : Virtual_dom.Vdom.Attr.t)] []
+    +|  ~attrs:[Html_syntax.Attr.tailwind "bg-white";
+    +|         Html_syntax.Attr.tailwind "bg-white foo bar baz"] []
     |}]
 ;;
 
@@ -41,7 +71,16 @@ let%expect_test "No quotes" =
   test {|<div tailwind=bg-white></div>|};
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     Html_syntax.Node.div
       ~attrs:[([%tailwind "bg-white"] : Virtual_dom.Vdom.Attr.t)] []
+
+    PPX_HTML_KERNEL (diff):
+    -1,2 +1,1
+    -|Html_syntax.Node.div
+    -|  ~attrs:[([%tailwind "bg-white"] : Virtual_dom.Vdom.Attr.t)] []
+    +|Html_syntax.Node.div ~attrs:[Html_syntax.Attr.tailwind "bg-white"] []
     |}]
 ;;

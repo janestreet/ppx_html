@@ -3,7 +3,12 @@ open Test_utils
 
 let%expect_test "Hello world!" =
   test {|<h1>Hello World!</h1>|};
-  [%expect {| Html_syntax.Node.h1 [Html_syntax.Node.text "Hello World!"] |}]
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Html_syntax.Node.h1 [Html_syntax.Node.text "Hello World!"]
+    |}]
 ;;
 
 let%expect_test "Nesting" =
@@ -13,6 +18,8 @@ let%expect_test "Nesting" =
   |};
   [%expect
     {|
+    same output between ppx_html and ppx_html_kernel
+
     Html_syntax.Node.p
       [Html_syntax.Node.text " Capybaras are ";
       Html_syntax.Node.strong [Html_syntax.Node.text "cool"]]
@@ -39,7 +46,12 @@ let%expect_test "HTML Custom elements" =
     {|
     <%{Vdom.Node.create "custom-element"}></>
   |};
-  [%expect {xxx| Vdom.Node.create "custom-element" [] |xxx}]
+  [%expect
+    {xxx|
+    same output between ppx_html and ppx_html_kernel
+
+    Vdom.Node.create "custom-element" []
+    |xxx}]
 ;;
 
 let%expect_test "Element tag interpolation" =
@@ -47,12 +59,22 @@ let%expect_test "Element tag interpolation" =
     {|
     <%{EXPR}></>
   |};
-  [%expect {| EXPR [] |}];
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    EXPR []
+    |}];
   test
     {|
     <%{EXPR}/>
   |};
-  [%expect {| EXPR () |}]
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    EXPR ()
+    |}]
 ;;
 
 let%expect_test "Attributes" =
@@ -62,12 +84,28 @@ let%expect_test "Attributes" =
   |};
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     Html_syntax.Node.h2
       ~attrs:[(Html_syntax.Attr.class_ "menu-add-card-header" : Virtual_dom.Vdom.Attr.t);
              (Html_syntax.Attr.height "20" : Virtual_dom.Vdom.Attr.t);
              (Html_syntax.Attr.on_click
                 (fun _ -> Effect.print_s ([%message "hello"])) : Virtual_dom.Vdom.Attr.t)]
       []
+
+    PPX_HTML_KERNEL (diff):
+    -1,6 +1,5
+      Html_syntax.Node.h2
+    -|  ~attrs:[(Html_syntax.Attr.class_ "menu-add-card-header" : Virtual_dom.Vdom.Attr.t);
+    -|         (Html_syntax.Attr.height "20" : Virtual_dom.Vdom.Attr.t);
+    -|         (Html_syntax.Attr.on_click
+    +|  ~attrs:[Html_syntax.Attr.class_ "menu-add-card-header";
+    +|         Html_syntax.Attr.height "20";
+    +|         Html_syntax.Attr.on_click
+    -|            (fun _ -> Effect.print_s ([%message "hello"])) : Virtual_dom.Vdom.Attr.t)]
+    -|  []
+    +|           (fun _ -> Effect.print_s ([%message "hello"]))] []
     |}];
   [%expect {| |}]
 ;;
@@ -79,9 +117,19 @@ let%expect_test "Attributes and element tag interpolation" =
   |};
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     ELEMENT_EXPR
       ~attrs:[(ATTRIBUTE_EXPR : Virtual_dom.Vdom.Attr.t);
              (Html_syntax.Attr.foo DUMMY_ATTR_EXPR : Virtual_dom.Vdom.Attr.t)] []
+
+    PPX_HTML_KERNEL (diff):
+    -1,3 +1,1
+    -|ELEMENT_EXPR
+    -|  ~attrs:[(ATTRIBUTE_EXPR : Virtual_dom.Vdom.Attr.t);
+    -|         (Html_syntax.Attr.foo DUMMY_ATTR_EXPR : Virtual_dom.Vdom.Attr.t)] []
+    +|ELEMENT_EXPR ~attrs:[ATTRIBUTE_EXPR; Html_syntax.Attr.foo DUMMY_ATTR_EXPR] []
     |}]
 ;;
 
@@ -98,22 +146,48 @@ let%expect_test "Key-based attribute interpolation" =
     {|
     <%{EXPR}></>
   |};
-  [%expect {| EXPR [] |}]
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    EXPR []
+    |}]
 ;;
 
 let%expect_test "Empty node" =
   test {||};
-  [%expect {| Html_syntax.Node.none |}]
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Html_syntax.Node.none
+    |}]
 ;;
 
 let%expect_test "JSX fragment" =
   test {|<></>|};
-  [%expect {| Html_syntax.Node.fragment [] |}]
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Html_syntax.Node.fragment []
+    |}]
 ;;
 
 let%expect_test "Interpolation with no parsing context" =
   test {|%{foo}|};
-  [%expect {| (foo : Virtual_dom.Vdom.Node.t) |}];
+  [%expect
+    {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
+    (foo : Virtual_dom.Vdom.Node.t)
+
+    PPX_HTML_KERNEL (diff):
+    -1,1 +1,1
+    -|(foo : Virtual_dom.Vdom.Node.t)
+    +|foo
+    |}];
   (* NOTE: Wow! It using fragment implicitly here is really cool! *)
   Expect_test_helpers_core.require_does_raise (fun () -> test {|%{foo} %{bar}|});
   [%expect
@@ -133,9 +207,19 @@ let%expect_test "Many classes used at once" =
   test {|<div class="foo bar baz"></div>|};
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     Html_syntax.Node.div
       ~attrs:[(Html_syntax.Attr.classes ["foo"; "bar"; "baz"] : Virtual_dom.Vdom.Attr.t)]
       []
+
+    PPX_HTML_KERNEL (diff):
+    -1,3 +1,1
+    -|Html_syntax.Node.div
+    -|  ~attrs:[(Html_syntax.Attr.classes ["foo"; "bar"; "baz"] : Virtual_dom.Vdom.Attr.t)]
+    -|  []
+    +|Html_syntax.Node.div ~attrs:[Html_syntax.Attr.class_ "foo bar baz"] []
     |}]
 ;;
 
@@ -152,10 +236,22 @@ let%expect_test "classes with substitutions" =
   test {|<div class="foo-%{"bar"}-baz fizz %{"other"}"></div>|};
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     Html_syntax.Node.div
       ~attrs:[(Html_syntax.Attr.classes
                  [[%string "foo-%{(\"bar\")}-baz"]; "fizz"; ("other" : string)] :
              Virtual_dom.Vdom.Attr.t)] []
+
+    PPX_HTML_KERNEL (diff):
+    -1,4 +1,3
+      Html_syntax.Node.div
+    -|  ~attrs:[(Html_syntax.Attr.classes
+    -|             [[%string "foo-%{(\"bar\")}-baz"]; "fizz"; ("other" : string)] :
+    -|         Virtual_dom.Vdom.Attr.t)] []
+    +|  ~attrs:[Html_syntax.Attr.class_
+    +|            ([%string "foo-%{(\"bar\")}-baz fizz %{(\"other\")}"])] []
     |}]
 ;;
 
@@ -174,6 +270,9 @@ let%expect_test "Complex-ish test case" =
         |};
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     Html_syntax.Node.div
       ~attrs:[(Html_syntax.Attr.classes ["menu-add-card"] : Virtual_dom.Vdom.Attr.t);
              (Html_syntax.Attr.on_click
@@ -188,6 +287,34 @@ let%expect_test "Complex-ish test case" =
         ~attrs:[(Html_syntax.Attr.class_ "menu-add-card-text" : Virtual_dom.Vdom.Attr.t)]
         [(Vdom.Node.text text : Virtual_dom.Vdom.Node.t)];
       (help : Virtual_dom.Vdom.Node.t)]
+
+    PPX_HTML_KERNEL (diff):
+    -1,14 +1,12
+      Html_syntax.Node.div
+    -|  ~attrs:[(Html_syntax.Attr.classes ["menu-add-card"] : Virtual_dom.Vdom.Attr.t);
+    -|         (Html_syntax.Attr.on_click
+    +|  ~attrs:[Html_syntax.Attr.class_ "menu-add-card";
+    +|         Html_syntax.Attr.on_click
+    -|            (fun _ -> Effect.print_s ([%message "capybaras are cool"])) :
+    -|         Virtual_dom.Vdom.Attr.t)]
+    -|  [(title : Virtual_dom.Vdom.Node.t);
+    +|           (fun _ -> Effect.print_s ([%message "capybaras are cool"]))]
+    +|  [title;
+    -|  Html_syntax.Node.span
+    -|    ~attrs:[(Html_syntax.Attr.class_ "pill" : Virtual_dom.Vdom.Attr.t);
+    -|           (Html_syntax.Attr.class_ "menu-add-card-verb" : Virtual_dom.Vdom.Attr.t)]
+    -|    [(Vdom.Node.text verb : Virtual_dom.Vdom.Node.t)];
+    +|  Html_syntax.Node.span
+    +|    ~attrs:[Html_syntax.Attr.class_ "pill";
+    +|           Html_syntax.Attr.class_ "menu-add-card-verb"]
+    +|    [Vdom.Node.text verb];
+    -|  Html_syntax.Node.span
+    -|    ~attrs:[(Html_syntax.Attr.class_ "menu-add-card-text" : Virtual_dom.Vdom.Attr.t)]
+    -|    [(Vdom.Node.text text : Virtual_dom.Vdom.Node.t)];
+    -|  (help : Virtual_dom.Vdom.Node.t)]
+    +|  Html_syntax.Node.span ~attrs:[Html_syntax.Attr.class_ "menu-add-card-text"]
+    +|    [Vdom.Node.text text];
+    +|  help]
     |}]
 ;;
 
@@ -199,11 +326,26 @@ let%expect_test "Attrs that are OCaml keywords are special cased" =
   |};
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     Html_syntax.Node.div
       ~attrs:[(Html_syntax.Attr.classes ["class"] : Virtual_dom.Vdom.Attr.t);
              (Html_syntax.Attr.for_ "for" : Virtual_dom.Vdom.Attr.t);
              (Html_syntax.Attr.type_ "type" : Virtual_dom.Vdom.Attr.t);
              (Html_syntax.Attr.open_ : Virtual_dom.Vdom.Attr.t)] []
+
+    PPX_HTML_KERNEL (diff):
+    -1,5 +1,5
+      Html_syntax.Node.div
+    -|  ~attrs:[(Html_syntax.Attr.classes ["class"] : Virtual_dom.Vdom.Attr.t);
+    -|         (Html_syntax.Attr.for_ "for" : Virtual_dom.Vdom.Attr.t);
+    -|         (Html_syntax.Attr.type_ "type" : Virtual_dom.Vdom.Attr.t);
+    -|         (Html_syntax.Attr.open_ : Virtual_dom.Vdom.Attr.t)] []
+    +|  ~attrs:[Html_syntax.Attr.class_ "class";
+    +|         Html_syntax.Attr.for_ "for";
+    +|         Html_syntax.Attr.type_ "type";
+    +|         Html_syntax.Attr.open_] []
     |}]
 ;;
 
@@ -214,7 +356,12 @@ let%expect_test "Nodes that are OCaml keywords are not handled." =
     {|
     <lazy></lazy>
   |};
-  [%expect {| Html_syntax.Node.lazy_ [] |}]
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Html_syntax.Node.lazy_ []
+    |}]
 ;;
 
 let%expect_test "Disabled attribute" =
@@ -224,8 +371,17 @@ let%expect_test "Disabled attribute" =
   |};
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     Html_syntax.Node.div
       ~attrs:[(Html_syntax.Attr.disabled : Virtual_dom.Vdom.Attr.t)] []
+
+    PPX_HTML_KERNEL (diff):
+    -1,2 +1,1
+    -|Html_syntax.Node.div
+    -|  ~attrs:[(Html_syntax.Attr.disabled : Virtual_dom.Vdom.Attr.t)] []
+    +|Html_syntax.Node.div ~attrs:[Html_syntax.Attr.disabled] []
     |}]
 ;;
 
@@ -236,8 +392,17 @@ let%expect_test "className is not special handled" =
   |};
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     Html_syntax.Node.div
       ~attrs:[(Html_syntax.Attr.className "foo" : Virtual_dom.Vdom.Attr.t)] []
+
+    PPX_HTML_KERNEL (diff):
+    -1,2 +1,1
+    -|Html_syntax.Node.div
+    -|  ~attrs:[(Html_syntax.Attr.className "foo" : Virtual_dom.Vdom.Attr.t)] []
+    +|Html_syntax.Node.div ~attrs:[Html_syntax.Attr.className "foo"] []
     |}]
 ;;
 
@@ -249,9 +414,20 @@ let%expect_test "Duplicate attribute names." =
   (* How these are handled is deferred to the implementation of [?attrs]*)
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     Html_syntax.Node.div
       ~attrs:[(Html_syntax.Attr.a "1" : Virtual_dom.Vdom.Attr.t);
              (Html_syntax.Attr.a "2" : Virtual_dom.Vdom.Attr.t)] []
+
+    PPX_HTML_KERNEL (diff):
+    -1,3 +1,2
+    -|Html_syntax.Node.div
+    -|  ~attrs:[(Html_syntax.Attr.a "1" : Virtual_dom.Vdom.Attr.t);
+    -|         (Html_syntax.Attr.a "2" : Virtual_dom.Vdom.Attr.t)] []
+    +|Html_syntax.Node.div ~attrs:[Html_syntax.Attr.a "1"; Html_syntax.Attr.a "2"]
+    +|  []
     |}];
   test
     {|
@@ -259,9 +435,19 @@ let%expect_test "Duplicate attribute names." =
   |};
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     Html_syntax.Node.div
       ~attrs:[(Html_syntax.Attr.classes ["foo"] : Virtual_dom.Vdom.Attr.t);
              (Html_syntax.Attr.classes ["bar"] : Virtual_dom.Vdom.Attr.t)] []
+
+    PPX_HTML_KERNEL (diff):
+    -1,3 +1,2
+      Html_syntax.Node.div
+    -|  ~attrs:[(Html_syntax.Attr.classes ["foo"] : Virtual_dom.Vdom.Attr.t);
+    -|         (Html_syntax.Attr.classes ["bar"] : Virtual_dom.Vdom.Attr.t)] []
+    +|  ~attrs:[Html_syntax.Attr.class_ "foo"; Html_syntax.Attr.class_ "bar"] []
     |}]
 ;;
 
@@ -272,9 +458,20 @@ let%expect_test "Escaping of attribute strings" =
   |};
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     Html_syntax.Node.div
       ~attrs:[(Html_syntax.Attr.no_quotes "1" : Virtual_dom.Vdom.Attr.t);
              (Html_syntax.Attr.with_quotes "2" : Virtual_dom.Vdom.Attr.t)] []
+
+    PPX_HTML_KERNEL (diff):
+    -1,3 +1,3
+      Html_syntax.Node.div
+    -|  ~attrs:[(Html_syntax.Attr.no_quotes "1" : Virtual_dom.Vdom.Attr.t);
+    -|         (Html_syntax.Attr.with_quotes "2" : Virtual_dom.Vdom.Attr.t)] []
+    +|  ~attrs:[Html_syntax.Attr.no_quotes "1"; Html_syntax.Attr.with_quotes "2"]
+    +|  []
     |}];
   (* This one handles escaped "\"" correctly. *)
   test
@@ -283,9 +480,19 @@ let%expect_test "Escaping of attribute strings" =
      |};
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     Html_syntax.Node.div
       ~attrs:[(Html_syntax.Attr.two "\"\"" : Virtual_dom.Vdom.Attr.t);
              (Html_syntax.Attr.one "\"" : Virtual_dom.Vdom.Attr.t)] []
+
+    PPX_HTML_KERNEL (diff):
+    -1,3 +1,2
+      Html_syntax.Node.div
+    -|  ~attrs:[(Html_syntax.Attr.two "\"\"" : Virtual_dom.Vdom.Attr.t);
+    -|         (Html_syntax.Attr.one "\"" : Virtual_dom.Vdom.Attr.t)] []
+    +|  ~attrs:[Html_syntax.Attr.two "\"\""; Html_syntax.Attr.one "\""] []
     |}]
 ;;
 
@@ -298,11 +505,24 @@ let%expect_test "ppx_html inside of ppx_html" =
      in a different way. This test only runs a single invocation of the PPX. *)
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     Html_syntax.Node.div
       ~attrs:[(Html_syntax.Attr.no_quotes "1" : Virtual_dom.Vdom.Attr.t);
              (Html_syntax.Attr.with_quotes "2" : Virtual_dom.Vdom.Attr.t)]
       [Html_syntax.Node.text " ";
       ([%html {x|<p>hello</p>|x}] : Virtual_dom.Vdom.Node.t)]
+
+    PPX_HTML_KERNEL (diff):
+    -1,5 +1,3
+      Html_syntax.Node.div
+    -|  ~attrs:[(Html_syntax.Attr.no_quotes "1" : Virtual_dom.Vdom.Attr.t);
+    -|         (Html_syntax.Attr.with_quotes "2" : Virtual_dom.Vdom.Attr.t)]
+    +|  ~attrs:[Html_syntax.Attr.no_quotes "1"; Html_syntax.Attr.with_quotes "2"]
+    -|  [Html_syntax.Node.text " ";
+    -|  ([%html {x|<p>hello</p>|x}] : Virtual_dom.Vdom.Node.t)]
+    +|  [Html_syntax.Node.text " "; [%html {x|<p>hello</p>|x}]]
     |}]
 ;;
 
@@ -320,6 +540,9 @@ let%expect_test "Childless HTML Tags" =
   |};
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     Html_syntax.Node.div
       [Html_syntax.Node.text " Hello ";
       Html_syntax.Node.br ();
@@ -329,6 +552,20 @@ let%expect_test "Childless HTML Tags" =
       Html_syntax.Node.img
         ~attrs:[(Html_syntax.Attr.src "./img.png" : Virtual_dom.Vdom.Attr.t)] ();
       Html_syntax.Node.hr ()]
+
+    PPX_HTML_KERNEL (diff):
+    -1,9 +1,7
+      Html_syntax.Node.div
+        [Html_syntax.Node.text " Hello ";
+        Html_syntax.Node.br ();
+        Html_syntax.Node.text " World! ";
+    -|  Html_syntax.Node.input
+    -|    ~attrs:[(Html_syntax.Attr.type_ "checkbox" : Virtual_dom.Vdom.Attr.t)] ();
+    +|  Html_syntax.Node.input ~attrs:[Html_syntax.Attr.type_ "checkbox"] ();
+    -|  Html_syntax.Node.img
+    -|    ~attrs:[(Html_syntax.Attr.src "./img.png" : Virtual_dom.Vdom.Attr.t)] ();
+    +|  Html_syntax.Node.img ~attrs:[Html_syntax.Attr.src "./img.png"] ();
+        Html_syntax.Node.hr ()]
     |}]
 ;;
 
@@ -358,21 +595,46 @@ let%expect_test "Sexp for debugging" =
     <%{Vdom.Node.sexp_for_debugging}>
     </>
   |};
-  [%expect {| Vdom.Node.sexp_for_debugging [] |}]
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Vdom.Node.sexp_for_debugging []
+    |}]
 ;;
 
 let%expect_test "Quoted strings inside of element's body work" =
   test {| "hello" |};
-  [%expect {| Html_syntax.Node.text " \"hello\" " |}];
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Html_syntax.Node.text " \"hello\" "
+    |}];
   test {| <div>"hello world"</div> |};
-  [%expect {| Html_syntax.Node.div [Html_syntax.Node.text "\"hello world\""] |}];
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Html_syntax.Node.div [Html_syntax.Node.text "\"hello world\""]
+    |}];
   test {| <div>"hello world"</div> |};
-  [%expect {| Html_syntax.Node.div [Html_syntax.Node.text "\"hello world\""] |}]
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Html_syntax.Node.div [Html_syntax.Node.text "\"hello world\""]
+    |}]
 ;;
 
 let%expect_test "Other forms of html escaping" =
   test {|<div>& " ' // </div>|};
-  [%expect {| Html_syntax.Node.div [Html_syntax.Node.text "& \" ' // "] |}]
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Html_syntax.Node.div [Html_syntax.Node.text "& \" ' // "]
+    |}]
 ;;
 
 let%expect_test "Comments" =
@@ -387,7 +649,12 @@ let%expect_test "Comments" =
       <div></div>
     </div>
   |};
-  [%expect {| Html_syntax.Node.div [Html_syntax.Node.div []; Html_syntax.Node.div []] |}];
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Html_syntax.Node.div [Html_syntax.Node.div []; Html_syntax.Node.div []]
+    |}];
   (* Embedded OCaml comments kind of work. *)
   test
     {|
@@ -399,10 +666,21 @@ let%expect_test "Comments" =
   |};
   [%expect
     {|
+    Difference between ppx_html and ppx_html_kernel
+
+    PPX_HTML:
     Html_syntax.Node.div
       [Html_syntax.Node.div [];
       (Vdom.Node.none : Virtual_dom.Vdom.Node.t);
       Html_syntax.Node.div []]
+
+    PPX_HTML_KERNEL (diff):
+    -1,4 +1,2
+      Html_syntax.Node.div
+    -|  [Html_syntax.Node.div [];
+    -|  (Vdom.Node.none : Virtual_dom.Vdom.Node.t);
+    -|  Html_syntax.Node.div []]
+    +|  [Html_syntax.Node.div []; Vdom.Node.none; Html_syntax.Node.div []]
     |}]
 ;;
 
@@ -416,10 +694,19 @@ let%expect_test "Children" =
     </div>
   |};
   [%expect
-    {| Html_syntax.Node.div [Html_syntax.Node.input (); Html_syntax.Node.div ()] |}]
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Html_syntax.Node.div [Html_syntax.Node.input (); Html_syntax.Node.div ()]
+    |}]
 ;;
 
 let%expect_test "Modul on a tag" =
   test {|<%{EXPR#Foo}></>|};
-  [%expect {| Foo.to_string EXPR [] |}]
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Foo.to_string EXPR []
+    |}]
 ;;

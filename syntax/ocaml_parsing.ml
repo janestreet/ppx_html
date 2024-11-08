@@ -35,8 +35,11 @@ let string_tokens_exn string =
 let try_with_syntax_error f =
   match Ocaml_common.Warnings.without_warnings f with
   | x -> Ok x
-  | exception ((Lexer.Error _ | Syntaxerr.Error _ | Stdlib.Parsing.Parse_error) as exn) ->
-    Error (Base.Error.of_exn exn)
+  | exception
+      (( Lexer.Error _
+       | Syntaxerr.Error _
+       | Stdlib.Parsing.Parse_error
+       | Jane_syntax_parsing.Error.Error _ ) as exn) -> Error (Base.Error.of_exn exn)
 ;;
 
 let string_tokens : string -> Parser.token list Base.Or_error.t =
@@ -63,7 +66,7 @@ let rsplit_on_hash : string -> (string * string) option =
             } )
         ->
         match token with
-        | HASH -> { last_seen_hash_index = Some pos_cnum }
+        | HASH | HASH_SUFFIX -> { last_seen_hash_index = Some pos_cnum }
         | _ -> acc)
   in
   Option.map last_seen_hash_index ~f:(fun index ->

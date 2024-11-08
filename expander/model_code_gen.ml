@@ -6,12 +6,19 @@ module C = Ast_builder.Default
 
 let sanitize_ocaml_keyword s = if Ppxlib.Keyword.is_keyword s then s ^ "_" else s
 
-let rec node_expr : html_syntax_module:longident loc option -> Node.t -> expression =
-  fun ~html_syntax_module -> function
+let rec node_expr
+  :  html_syntax_module:longident loc option -> runtime_kind:Runtime_kind.t -> Node.t
+  -> expression
+  =
+  fun ~html_syntax_module ~runtime_kind -> function
   | Text { txt; loc } ->
     [%expr [%e Shared.node_fn ~loc ~html_syntax_module "text"] [%e C.estring ~loc txt]]
   | Expr { expr; interpolation_kind } ->
-    Expr_code_gen.expr ~html_syntax_module ~type_:(Node { interpolation_kind }) expr
+    Expr_code_gen.expr
+      ~html_syntax_module
+      ~runtime_kind
+      ~type_:(Node { interpolation_kind })
+      expr
   | Element
       { tag
       ; attrs
@@ -25,7 +32,7 @@ let rec node_expr : html_syntax_module:longident loc option -> Node.t -> express
       match tag with
       | Literal name ->
         Shared.node_fn ~loc:name.loc ~html_syntax_module (sanitize_ocaml_keyword name.txt)
-      | Expr e -> Expr_code_gen.expr ~html_syntax_module e
+      | Expr e -> Expr_code_gen.expr ~runtime_kind ~html_syntax_module e
       | Fragment loc -> Shared.node_fn ~loc ~html_syntax_module "fragment"
     in
     let attrs, keys =
@@ -46,32 +53,38 @@ let rec node_expr : html_syntax_module:longident loc option -> Node.t -> express
           {|Error: The attribute key needs a value. (e.g. key=a-unique-key)|}
       | [ (Some value, _) ] ->
         let arg_expression =
-          Attr_code_gen.value_to_expression ~html_syntax_module value
+          Attr_code_gen.value_to_expression ~runtime_kind ~html_syntax_module value
         in
         [ Labelled "key", arg_expression ]
     in
     let attrs =
       List.map attrs ~f:(function
         | Attr.Expr { expr; interpolation_kind } ->
-          Expr_code_gen.expr ~html_syntax_module ~type_:(Attr { interpolation_kind }) expr
+          Expr_code_gen.expr
+            ~runtime_kind
+            ~html_syntax_module
+            ~type_:(Attr { interpolation_kind })
+            expr
         | Attr.Attr { name; value = None; loc = _ } ->
           Shared.attr_fn
             ~loc:name.loc
             ~html_syntax_module
             (sanitize_ocaml_keyword name.txt)
         | Attr.Attr { name; value = Some value; loc } ->
-          Attr_code_gen.code ~loc ~html_syntax_module name value)
+          Attr_code_gen.code ~runtime_kind ~loc ~html_syntax_module name value)
     in
     let args =
       let attrs =
+        let maybe_enforce_type expressions =
+          match runtime_kind with
+          | Js_of_ocaml ->
+            List.map expressions ~f:(fun e ->
+              [%expr ([%e e] : [%t Shared.attr_t_type ~loc])])
+          | Kernel -> expressions
+        in
         if List.is_empty attrs
         then []
-        else
-          [ ( Labelled "attrs"
-            , attrs
-              |> List.map ~f:(fun e -> [%expr ([%e e] : [%t Shared.attr_t_type ~loc])])
-              |> C.elist ~loc )
-          ]
+        else [ Labelled "attrs", attrs |> maybe_enforce_type |> C.elist ~loc ]
       in
       let nodes =
         [ ( Nolabel
@@ -79,7 +92,9 @@ let rec node_expr : html_syntax_module:longident loc option -> Node.t -> express
             | None -> [%expr ()]
             | Some inner ->
               let arg_expressions =
-                inner |> List.map ~f:(fun node -> node_expr ~html_syntax_module node)
+                inner
+                |> List.map ~f:(fun node ->
+                  node_expr ~runtime_kind ~html_syntax_module node)
               in
               let loc =
                 match arg_expressions with
@@ -100,7 +115,7 @@ let rec node_expr : html_syntax_module:longident loc option -> Node.t -> express
     C.pexp_apply ~loc:full_loc tag args
 ;;
 
-let code ~loc ~html_syntax_module (model : Node.t list) =
+let code ~loc ~html_syntax_module ~(runtime_kind : Runtime_kind.t) (model : Node.t list) =
   let model =
     List.filter model ~f:(function
       | Text { txt; _ } when String.for_all txt ~f:Char.is_whitespace -> false
@@ -108,7 +123,7 @@ let code ~loc ~html_syntax_module (model : Node.t list) =
   in
   match model with
   | [] -> Shared.node_fn ~html_syntax_module ~loc "none"
-  | [ t ] -> { (node_expr ~html_syntax_module t) with pexp_loc = loc }
+  | [ t ] -> { (node_expr ~html_syntax_module ~runtime_kind t) with pexp_loc = loc }
   | _ :: _ as elements ->
     Location.raise_errorf
       ~loc

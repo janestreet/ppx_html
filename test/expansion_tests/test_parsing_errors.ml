@@ -19,22 +19,22 @@ let%expect_test "No closing tag." =
 let%expect_test "Misparsed OCaml expression" =
   Expect_test_helpers_core.require_does_raise (fun () ->
     test
-      {| 
+      {|
 
-  <div> 
+  <div>
 
        %{
 
-       let x = = = = = = = 1 in 
+       let x = = = = = = = 1 in
        ()
 
        }
 
 
-  </div> 
+  </div>
 
 
   |});
   [%expect
-    {| ("Failed to parse OCaml expression inside of HTML.\nFile \"_none_\", line 7, characters 15-16:\n                                                 Error: Syntax error\n") |}]
+    {| ("Failed to parse OCaml expression inside of HTML.\nFile \"_none_\", line 6, characters 15-16:\n                                                 Error: Syntax error\n") |}]
 ;;
