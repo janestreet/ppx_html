@@ -9,31 +9,31 @@ let%expect_test "Syntax error inside of OCaml expression" =
       {|
       <div>
         %{
-         Vdom.Node.text  ( "hello" 
+         Vdom.Node.text  ( "hello"
 
 
-    ^  
+    ^
 
-    ^ 
+    ^
 
 
-         "world" ) 
-         } 
+         "world" )
+         }
       </div>|});
   [%expect
-    {| ("Failed to parse OCaml expression inside of HTML.\nFile \"_none_\", line 9, characters 4-5:\n                                                 Error: Syntax error\n") |}];
+    {| ("Failed to parse OCaml expression inside of HTML.\nFile \"_none_\", line 8, characters 4-5:\n                                                 Error: Syntax error\n") |}];
   test
     {|
       <div>
         %{
-         Vdom.Node.text  ( "hello" 
+         Vdom.Node.text  ( "hello"
 
 
-    ^ 
+    ^
 
 
          "world" )
-         } 
+         }
       </div>|};
   [%expect
     {|
