@@ -9,13 +9,13 @@ let%expect_test "Node interpolation with a string literal" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      [(Html_syntax.Node.text ((" ")[@merlin.focus ]) : Virtual_dom.Vdom.Node.t)]
+      [(Html_syntax.Node.Primitives.text ((" ")[@merlin.focus ]) : Virtual_dom.Vdom.Node.t)]
 
     PPX_HTML_KERNEL (diff):
-    -1,2 +1,1
-    -|Html_syntax.Node.div
-    -|  [(Html_syntax.Node.text ((" ")[@merlin.focus ]) : Virtual_dom.Vdom.Node.t)]
-    +|Html_syntax.Node.div [Html_syntax.Node.text ((" ")[@merlin.focus ])]
+    -1,2 +1,2
+      Html_syntax.Node.div
+    -|  [(Html_syntax.Node.Primitives.text ((" ")[@merlin.focus ]) : Virtual_dom.Vdom.Node.t)]
+    +|  [Html_syntax.Node.Primitives.text ((" ")[@merlin.focus ])]
     |}];
   test {|<div> I am a %{" "}%{"string literal!"} </div>|};
   [%expect
@@ -24,20 +24,22 @@ let%expect_test "Node interpolation with a string literal" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      [Html_syntax.Node.text " I am a ";
-      (Html_syntax.Node.text ((" ")[@merlin.focus ]) : Virtual_dom.Vdom.Node.t);
-      (Html_syntax.Node.text (("string literal!")[@merlin.focus ]) : Virtual_dom.Vdom.Node.t);
-      Html_syntax.Node.text " "]
+      [Html_syntax.Node.Primitives.text " I am a ";
+      (Html_syntax.Node.Primitives.text ((" ")[@merlin.focus ]) : Virtual_dom.Vdom.Node.t);
+      (Html_syntax.Node.Primitives.text (("string literal!")[@merlin.focus ]) :
+      Virtual_dom.Vdom.Node.t);
+      Html_syntax.Node.Primitives.text " "]
 
     PPX_HTML_KERNEL (diff):
-    -1,5 +1,5
+    -1,6 +1,5
       Html_syntax.Node.div
-        [Html_syntax.Node.text " I am a ";
-    -|  (Html_syntax.Node.text ((" ")[@merlin.focus ]) : Virtual_dom.Vdom.Node.t);
-    -|  (Html_syntax.Node.text (("string literal!")[@merlin.focus ]) : Virtual_dom.Vdom.Node.t);
-    +|  Html_syntax.Node.text ((" ")[@merlin.focus ]);
-    +|  Html_syntax.Node.text (("string literal!")[@merlin.focus ]);
-        Html_syntax.Node.text " "]
+        [Html_syntax.Node.Primitives.text " I am a ";
+    -|  (Html_syntax.Node.Primitives.text ((" ")[@merlin.focus ]) : Virtual_dom.Vdom.Node.t);
+    -|  (Html_syntax.Node.Primitives.text (("string literal!")[@merlin.focus ]) :
+    -|  Virtual_dom.Vdom.Node.t);
+    +|  Html_syntax.Node.Primitives.text ((" ")[@merlin.focus ]);
+    +|  Html_syntax.Node.Primitives.text (("string literal!")[@merlin.focus ]);
+        Html_syntax.Node.Primitives.text " "]
     |}]
 ;;
 
@@ -52,16 +54,20 @@ let%expect_test "The string literal interpolation only happens in a node context
     PPX_HTML:
     Html_syntax.Node.div
       ~attrs:[("attr" : Virtual_dom.Vdom.Attr.t);
-             (Html_syntax.Attr.src "attr value" : Virtual_dom.Vdom.Attr.t)]
-      [Html_syntax.Node.text " "; "tag value" []; Html_syntax.Node.text " "]
+             (((Html_syntax.Attr.src)[@merlin.focus ]) "attr value" : Virtual_dom.Vdom.Attr.t)]
+      [Html_syntax.Node.Primitives.text " ";
+      "tag value" [];
+      Html_syntax.Node.Primitives.text " "]
 
     PPX_HTML_KERNEL (diff):
-    -1,4 +1,2
-    -|Html_syntax.Node.div
+    -1,6 +1,5
+      Html_syntax.Node.div
     -|  ~attrs:[("attr" : Virtual_dom.Vdom.Attr.t);
-    -|         (Html_syntax.Attr.src "attr value" : Virtual_dom.Vdom.Attr.t)]
-    +|Html_syntax.Node.div ~attrs:["attr"; Html_syntax.Attr.src "attr value"]
-        [Html_syntax.Node.text " "; "tag value" []; Html_syntax.Node.text " "]
+    -|         (((Html_syntax.Attr.src)[@merlin.focus ]) "attr value" : Virtual_dom.Vdom.Attr.t)]
+    +|  ~attrs:["attr"; ((Html_syntax.Attr.src)[@merlin.focus ]) "attr value"]
+        [Html_syntax.Node.Primitives.text " ";
+        "tag value" [];
+        Html_syntax.Node.Primitives.text " "]
     |}]
 ;;
 
@@ -75,16 +81,16 @@ let%expect_test "The interpolation does not happen if a modul is provided" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      [Html_syntax.Node.text " ";
-      (Html_syntax.Node.text (Modul.to_string "constant") : Virtual_dom.Vdom.Node.t);
-      Html_syntax.Node.text " "]
+      [Html_syntax.Node.Primitives.text " ";
+      (Html_syntax.Node.Primitives.text (Modul.to_string "constant") : Virtual_dom.Vdom.Node.t);
+      Html_syntax.Node.Primitives.text " "]
 
     PPX_HTML_KERNEL (diff):
     -1,4 +1,4
       Html_syntax.Node.div
-        [Html_syntax.Node.text " ";
-    -|  (Html_syntax.Node.text (Modul.to_string "constant") : Virtual_dom.Vdom.Node.t);
-    +|  Html_syntax.Node.text (Modul.to_string "constant");
-        Html_syntax.Node.text " "]
+        [Html_syntax.Node.Primitives.text " ";
+    -|  (Html_syntax.Node.Primitives.text (Modul.to_string "constant") : Virtual_dom.Vdom.Node.t);
+    +|  Html_syntax.Node.Primitives.text (Modul.to_string "constant");
+        Html_syntax.Node.Primitives.text " "]
     |}]
 ;;

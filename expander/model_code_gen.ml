@@ -12,7 +12,9 @@ let rec node_expr
   =
   fun ~html_syntax_module ~runtime_kind -> function
   | Text { txt; loc } ->
-    [%expr [%e Shared.node_fn ~loc ~html_syntax_module "text"] [%e C.estring ~loc txt]]
+    [%expr
+      [%e Shared.node_fn ~loc ~html_syntax_module ~primitive:true "text"]
+        [%e C.estring ~loc txt]]
   | Expr { expr; interpolation_kind } ->
     Expr_code_gen.expr
       ~html_syntax_module
@@ -31,9 +33,13 @@ let rec node_expr
     let tag =
       match tag with
       | Literal name ->
-        Shared.node_fn ~loc:name.loc ~html_syntax_module (sanitize_ocaml_keyword name.txt)
+        Shared.node_fn
+          ~loc:name.loc
+          ~html_syntax_module
+          ~primitive:false
+          (sanitize_ocaml_keyword name.txt)
       | Expr e -> Expr_code_gen.expr ~runtime_kind ~html_syntax_module e
-      | Fragment loc -> Shared.node_fn ~loc ~html_syntax_module "fragment"
+      | Fragment loc -> Shared.node_fn ~loc ~html_syntax_module ~primitive:true "fragment"
     in
     let attrs, keys =
       List.partition_map attrs ~f:(function
@@ -69,6 +75,7 @@ let rec node_expr
           Shared.attr_fn
             ~loc:name.loc
             ~html_syntax_module
+            ~primitive:false
             (sanitize_ocaml_keyword name.txt)
         | Attr.Attr { name; value = Some value; loc } ->
           Attr_code_gen.code ~runtime_kind ~loc ~html_syntax_module name value)
@@ -122,7 +129,7 @@ let code ~loc ~html_syntax_module ~(runtime_kind : Runtime_kind.t) (model : Node
       | _ -> true)
   in
   match model with
-  | [] -> Shared.node_fn ~html_syntax_module ~loc "none"
+  | [] -> Shared.node_fn ~html_syntax_module ~loc ~primitive:true "none"
   | [ t ] -> { (node_expr ~html_syntax_module ~runtime_kind t) with pexp_loc = loc }
   | _ :: _ as elements ->
     Location.raise_errorf

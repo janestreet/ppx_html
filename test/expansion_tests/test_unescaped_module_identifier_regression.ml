@@ -25,13 +25,15 @@ let%expect_test "Two kinds of '#'s" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      [(Html_syntax.Node.text (Module.to_string (text "#hi!")) : Virtual_dom.Vdom.Node.t)]
+      [(Html_syntax.Node.Primitives.text (Module.to_string (text "#hi!")) :
+      Virtual_dom.Vdom.Node.t)]
 
     PPX_HTML_KERNEL (diff):
-    -1,2 +1,1
-    -|Html_syntax.Node.div
-    -|  [(Html_syntax.Node.text (Module.to_string (text "#hi!")) : Virtual_dom.Vdom.Node.t)]
-    +|Html_syntax.Node.div [Html_syntax.Node.text (Module.to_string (text "#hi!"))]
+    -1,3 +1,2
+      Html_syntax.Node.div
+    -|  [(Html_syntax.Node.Primitives.text (Module.to_string (text "#hi!")) :
+    -|  Virtual_dom.Vdom.Node.t)]
+    +|  [Html_syntax.Node.Primitives.text (Module.to_string (text "#hi!"))]
     |}]
 ;;
 
@@ -43,13 +45,15 @@ let%expect_test "Normal case" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      [(Html_syntax.Node.text (Module.to_string (text "#hi!")) : Virtual_dom.Vdom.Node.t)]
+      [(Html_syntax.Node.Primitives.text (Module.to_string (text "#hi!")) :
+      Virtual_dom.Vdom.Node.t)]
 
     PPX_HTML_KERNEL (diff):
-    -1,2 +1,1
-    -|Html_syntax.Node.div
-    -|  [(Html_syntax.Node.text (Module.to_string (text "#hi!")) : Virtual_dom.Vdom.Node.t)]
-    +|Html_syntax.Node.div [Html_syntax.Node.text (Module.to_string (text "#hi!"))]
+    -1,3 +1,2
+      Html_syntax.Node.div
+    -|  [(Html_syntax.Node.Primitives.text (Module.to_string (text "#hi!")) :
+    -|  Virtual_dom.Vdom.Node.t)]
+    +|  [Html_syntax.Node.Primitives.text (Module.to_string (text "#hi!"))]
     |}]
 ;;
 
@@ -114,13 +118,15 @@ module%test [@name "Other contexts"] _ = struct
 
       PPX_HTML:
       Html_syntax.Node.div
-        ~attrs:[(Html_syntax.Attr.foo "#hi" : Virtual_dom.Vdom.Attr.t)] []
+        ~attrs:[(((Html_syntax.Attr.foo)[@merlin.focus ]) "#hi" : Virtual_dom.Vdom.Attr.t)]
+        []
 
       PPX_HTML_KERNEL (diff):
-      -1,2 +1,1
+      -1,3 +1,2
       -|Html_syntax.Node.div
-      -|  ~attrs:[(Html_syntax.Attr.foo "#hi" : Virtual_dom.Vdom.Attr.t)] []
-      +|Html_syntax.Node.div ~attrs:[Html_syntax.Attr.foo "#hi"] []
+      -|  ~attrs:[(((Html_syntax.Attr.foo)[@merlin.focus ]) "#hi" : Virtual_dom.Vdom.Attr.t)]
+      +|Html_syntax.Node.div ~attrs:[((Html_syntax.Attr.foo)[@merlin.focus ]) "#hi"]
+          []
       |}];
     test {|<div foo=%{"#hi"#Foo}></div>|};
     [%expect
@@ -129,15 +135,15 @@ module%test [@name "Other contexts"] _ = struct
 
       PPX_HTML:
       Html_syntax.Node.div
-        ~attrs:[(Html_syntax.Attr.foo (Foo.to_string "#hi") : Virtual_dom.Vdom.Attr.t)]
-        []
+        ~attrs:[(((Html_syntax.Attr.foo)[@merlin.focus ]) (Foo.to_string "#hi") :
+               Virtual_dom.Vdom.Attr.t)] []
 
       PPX_HTML_KERNEL (diff):
-      -1,3 +1,1
-      -|Html_syntax.Node.div
-      -|  ~attrs:[(Html_syntax.Attr.foo (Foo.to_string "#hi") : Virtual_dom.Vdom.Attr.t)]
-      -|  []
-      +|Html_syntax.Node.div ~attrs:[Html_syntax.Attr.foo (Foo.to_string "#hi")] []
+      -1,3 +1,2
+        Html_syntax.Node.div
+      -|  ~attrs:[(((Html_syntax.Attr.foo)[@merlin.focus ]) (Foo.to_string "#hi") :
+      -|         Virtual_dom.Vdom.Attr.t)] []
+      +|  ~attrs:[((Html_syntax.Attr.foo)[@merlin.focus ]) (Foo.to_string "#hi")] []
       |}]
   ;;
 
@@ -149,39 +155,46 @@ module%test [@name "Other contexts"] _ = struct
 
       PPX_HTML:
       Html_syntax.Node.div
-        ~attrs:[((match "#hi" with | None -> Html_syntax.Attr.empty | Some x -> x) :
-               Virtual_dom.Vdom.Attr.t);
+        ~attrs:[((match "#hi" with
+                  | None -> Html_syntax.Attr.Primitives.empty
+                  | Some x -> x) : Virtual_dom.Vdom.Attr.t);
                ((match "#hi" with
-                 | None -> Html_syntax.Attr.empty
+                 | None -> Html_syntax.Attr.Primitives.empty
                  | Some x -> Foo.to_attr x) : Virtual_dom.Vdom.Attr.t)]
-        [((match "#hi" with | None -> Html_syntax.Node.none | Some x -> x) :
-        Virtual_dom.Vdom.Node.t);
-        Html_syntax.Node.text " ";
+        [((match "#hi" with
+           | None -> Html_syntax.Node.Primitives.none
+           | Some x -> x) : Virtual_dom.Vdom.Node.t);
+        Html_syntax.Node.Primitives.text " ";
         ((match "#hi" with
-          | None -> Html_syntax.Node.none
-          | Some x -> Html_syntax.Node.text (Foo.to_string x)) : Virtual_dom.Vdom.Node.t)]
+          | None -> Html_syntax.Node.Primitives.none
+          | Some x -> Html_syntax.Node.Primitives.text (Foo.to_string x)) :
+        Virtual_dom.Vdom.Node.t)]
 
       PPX_HTML_KERNEL (diff):
-      -1,12 +1,10
+      -1,15 +1,12
         Html_syntax.Node.div
-      -|  ~attrs:[((match "#hi" with | None -> Html_syntax.Attr.empty | Some x -> x) :
-      -|         Virtual_dom.Vdom.Attr.t);
+      -|  ~attrs:[((match "#hi" with
+      +|  ~attrs:[(match "#hi" with
+                   | None -> Html_syntax.Attr.Primitives.empty
+      -|            | Some x -> x) : Virtual_dom.Vdom.Attr.t);
       -|         ((match "#hi" with
-      +|  ~attrs:[(match "#hi" with | None -> Html_syntax.Attr.empty | Some x -> x);
+      +|           | Some x -> x);
       +|         (match "#hi" with
-      -|           | None -> Html_syntax.Attr.empty
+      -|           | None -> Html_syntax.Attr.Primitives.empty
       -|           | Some x -> Foo.to_attr x) : Virtual_dom.Vdom.Attr.t)]
-      +|          | None -> Html_syntax.Attr.empty
+      +|          | None -> Html_syntax.Attr.Primitives.empty
       +|          | Some x -> Foo.to_attr x)]
-      -|  [((match "#hi" with | None -> Html_syntax.Node.none | Some x -> x) :
-      -|  Virtual_dom.Vdom.Node.t);
-      +|  [(match "#hi" with | None -> Html_syntax.Node.none | Some x -> x);
-          Html_syntax.Node.text " ";
+      -|  [((match "#hi" with
+      -|     | None -> Html_syntax.Node.Primitives.none
+      -|     | Some x -> x) : Virtual_dom.Vdom.Node.t);
+      +|  [(match "#hi" with | None -> Html_syntax.Node.Primitives.none | Some x -> x);
+          Html_syntax.Node.Primitives.text " ";
       -|  ((match "#hi" with
       +|  (match "#hi" with
-           | None -> Html_syntax.Node.none
-      -|    | Some x -> Html_syntax.Node.text (Foo.to_string x)) : Virtual_dom.Vdom.Node.t)]
-      +|   | Some x -> Html_syntax.Node.text (Foo.to_string x))]
+           | None -> Html_syntax.Node.Primitives.none
+      -|    | Some x -> Html_syntax.Node.Primitives.text (Foo.to_string x)) :
+      -|  Virtual_dom.Vdom.Node.t)]
+      +|   | Some x -> Html_syntax.Node.Primitives.text (Foo.to_string x))]
       |}]
   ;;
 
@@ -193,32 +206,34 @@ module%test [@name "Other contexts"] _ = struct
 
       PPX_HTML:
       Html_syntax.Node.div
-        ~attrs:[(Html_syntax.Attr.many "#hi" : Virtual_dom.Vdom.Attr.t);
-               (Html_syntax.Attr.many
+        ~attrs:[(Html_syntax.Attr.Primitives.many "#hi" : Virtual_dom.Vdom.Attr.t);
+               (Html_syntax.Attr.Primitives.many
                   (Ppx_html_runtime.List.map "#hi" ~f:Foo.to_attr) : Virtual_dom.Vdom.Attr.t)]
-        [(Html_syntax.Node.fragment "#hi" : Virtual_dom.Vdom.Node.t);
-        Html_syntax.Node.text " ";
-        (Html_syntax.Node.fragment
+        [(Html_syntax.Node.Primitives.fragment "#hi" : Virtual_dom.Vdom.Node.t);
+        Html_syntax.Node.Primitives.text " ";
+        (Html_syntax.Node.Primitives.fragment
            (Ppx_html_runtime.List.map "#hi"
-              ~f:(fun x -> Html_syntax.Node.text (Foo.to_string x))) : Virtual_dom.Vdom.Node.t)]
+              ~f:(fun x -> Html_syntax.Node.Primitives.text (Foo.to_string x))) :
+        Virtual_dom.Vdom.Node.t)]
 
       PPX_HTML_KERNEL (diff):
-      -1,9 +1,9
+      -1,10 +1,9
         Html_syntax.Node.div
-      -|  ~attrs:[(Html_syntax.Attr.many "#hi" : Virtual_dom.Vdom.Attr.t);
-      -|         (Html_syntax.Attr.many
-      +|  ~attrs:[Html_syntax.Attr.many "#hi";
-      +|         Html_syntax.Attr.many
+      -|  ~attrs:[(Html_syntax.Attr.Primitives.many "#hi" : Virtual_dom.Vdom.Attr.t);
+      -|         (Html_syntax.Attr.Primitives.many
+      +|  ~attrs:[Html_syntax.Attr.Primitives.many "#hi";
+      +|         Html_syntax.Attr.Primitives.many
       -|            (Ppx_html_runtime.List.map "#hi" ~f:Foo.to_attr) : Virtual_dom.Vdom.Attr.t)]
-      -|  [(Html_syntax.Node.fragment "#hi" : Virtual_dom.Vdom.Node.t);
+      -|  [(Html_syntax.Node.Primitives.fragment "#hi" : Virtual_dom.Vdom.Node.t);
       +|           (Ppx_html_runtime.List.map "#hi" ~f:Foo.to_attr)]
-      +|  [Html_syntax.Node.fragment "#hi";
-          Html_syntax.Node.text " ";
-      -|  (Html_syntax.Node.fragment
-      +|  Html_syntax.Node.fragment
+      +|  [Html_syntax.Node.Primitives.fragment "#hi";
+          Html_syntax.Node.Primitives.text " ";
+      -|  (Html_syntax.Node.Primitives.fragment
+      +|  Html_syntax.Node.Primitives.fragment
             (Ppx_html_runtime.List.map "#hi"
-      -|        ~f:(fun x -> Html_syntax.Node.text (Foo.to_string x))) : Virtual_dom.Vdom.Node.t)]
-      +|       ~f:(fun x -> Html_syntax.Node.text (Foo.to_string x)))]
+      -|        ~f:(fun x -> Html_syntax.Node.Primitives.text (Foo.to_string x))) :
+      -|  Virtual_dom.Vdom.Node.t)]
+      +|       ~f:(fun x -> Html_syntax.Node.Primitives.text (Foo.to_string x)))]
       |}]
   ;;
 end

@@ -28,8 +28,8 @@ let%expect_test "Whitespace is respected (no whitespace)" =
     same output between ppx_html and ppx_html_kernel
 
     Html_syntax.Node.div
-      [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
-      Html_syntax.Node.text "world "]
+      [Html_syntax.Node.span [Html_syntax.Node.Primitives.text "Hello"];
+      Html_syntax.Node.Primitives.text "world "]
     |}]
 ;;
 
@@ -45,8 +45,8 @@ let%expect_test "Whitepace is respected (whitespace exists and is not eaten up)"
     same output between ppx_html and ppx_html_kernel
 
     Html_syntax.Node.div
-      [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
-      Html_syntax.Node.text " world "]
+      [Html_syntax.Node.span [Html_syntax.Node.Primitives.text "Hello"];
+      Html_syntax.Node.Primitives.text " world "]
     |}]
 ;;
 
@@ -63,8 +63,8 @@ world
     same output between ppx_html and ppx_html_kernel
 
     Html_syntax.Node.div
-      [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
-      Html_syntax.Node.text " world "]
+      [Html_syntax.Node.span [Html_syntax.Node.Primitives.text "Hello"];
+      Html_syntax.Node.Primitives.text " world "]
     |}]
 ;;
 
@@ -79,9 +79,9 @@ module%test [@name "Handling of whitespace around non-text tags"] _ = struct
       same output between ppx_html and ppx_html_kernel
 
       Html_syntax.Node.div
-        [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
-        Html_syntax.Node.span [Html_syntax.Node.text " world"];
-        Html_syntax.Node.text "world"]
+        [Html_syntax.Node.span [Html_syntax.Node.Primitives.text "Hello"];
+        Html_syntax.Node.span [Html_syntax.Node.Primitives.text " world"];
+        Html_syntax.Node.Primitives.text "world"]
       |}]
   ;;
 
@@ -95,9 +95,9 @@ module%test [@name "Handling of whitespace around non-text tags"] _ = struct
       same output between ppx_html and ppx_html_kernel
 
       Html_syntax.Node.div
-        [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
-        Html_syntax.Node.span [Html_syntax.Node.text "world"];
-        Html_syntax.Node.text "world"]
+        [Html_syntax.Node.span [Html_syntax.Node.Primitives.text "Hello"];
+        Html_syntax.Node.span [Html_syntax.Node.Primitives.text "world"];
+        Html_syntax.Node.Primitives.text "world"]
       |}]
   ;;
 
@@ -111,10 +111,10 @@ module%test [@name "Handling of whitespace around non-text tags"] _ = struct
       same output between ppx_html and ppx_html_kernel
 
       Html_syntax.Node.div
-        [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
-        Html_syntax.Node.text " ";
-        Html_syntax.Node.span [Html_syntax.Node.text "world"];
-        Html_syntax.Node.text "world"]
+        [Html_syntax.Node.span [Html_syntax.Node.Primitives.text "Hello"];
+        Html_syntax.Node.Primitives.text " ";
+        Html_syntax.Node.span [Html_syntax.Node.Primitives.text "world"];
+        Html_syntax.Node.Primitives.text "world"]
       |}]
   ;;
 
@@ -131,8 +131,8 @@ module%test [@name "Handling of whitespace around non-text tags"] _ = struct
       same output between ppx_html and ppx_html_kernel
 
       Html_syntax.Node.div
-        [Html_syntax.Node.span [Html_syntax.Node.text "Hello"];
-        Html_syntax.Node.span [Html_syntax.Node.text "world"]]
+        [Html_syntax.Node.span [Html_syntax.Node.Primitives.text "Hello"];
+        Html_syntax.Node.span [Html_syntax.Node.Primitives.text "world"]]
       |}]
   ;;
 end

@@ -11,15 +11,15 @@ let%expect_test "Module expansions - attribute value" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      ~attrs:[(Html_syntax.Attr.width (Int.to_string 1) : Virtual_dom.Vdom.Attr.t)]
-      []
+      ~attrs:[(((Html_syntax.Attr.width)[@merlin.focus ]) (Int.to_string 1) :
+             Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,1
-    -|Html_syntax.Node.div
-    -|  ~attrs:[(Html_syntax.Attr.width (Int.to_string 1) : Virtual_dom.Vdom.Attr.t)]
-    -|  []
-    +|Html_syntax.Node.div ~attrs:[Html_syntax.Attr.width (Int.to_string 1)] []
+    -1,3 +1,2
+      Html_syntax.Node.div
+    -|  ~attrs:[(((Html_syntax.Attr.width)[@merlin.focus ]) (Int.to_string 1) :
+    -|         Virtual_dom.Vdom.Attr.t)] []
+    +|  ~attrs:[((Html_syntax.Attr.width)[@merlin.focus ]) (Int.to_string 1)] []
     |}]
 ;;
 
@@ -34,13 +34,13 @@ let%expect_test "Module expansions - node" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      [(Html_syntax.Node.text (Foo.to_string x) : Virtual_dom.Vdom.Node.t)]
+      [(Html_syntax.Node.Primitives.text (Foo.to_string x) : Virtual_dom.Vdom.Node.t)]
 
     PPX_HTML_KERNEL (diff):
     -1,2 +1,1
     -|Html_syntax.Node.div
-    -|  [(Html_syntax.Node.text (Foo.to_string x) : Virtual_dom.Vdom.Node.t)]
-    +|Html_syntax.Node.div [Html_syntax.Node.text (Foo.to_string x)]
+    -|  [(Html_syntax.Node.Primitives.text (Foo.to_string x) : Virtual_dom.Vdom.Node.t)]
+    +|Html_syntax.Node.div [Html_syntax.Node.Primitives.text (Foo.to_string x)]
     |}]
 ;;
 

@@ -39,7 +39,7 @@ let try_with_syntax_error f =
       (( Lexer.Error _
        | Syntaxerr.Error _
        | Stdlib.Parsing.Parse_error
-       | Jane_syntax_parsing.Error.Error _ ) as exn) -> Error (Base.Error.of_exn exn)
+       | Language_extension.Error.Error _ ) as exn) -> Error (Base.Error.of_exn exn)
 ;;
 
 let string_tokens : string -> Parser.token list Base.Or_error.t =

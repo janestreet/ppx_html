@@ -1,4 +1,5 @@
 open! Core
+open Test_util
 open Virtual_dom.Vdom.Html_syntax
 
 (* NOTE: This file just contains some "smoke" tests that actually make the calls/run the
@@ -12,36 +13,30 @@ module View = struct
     let maybe_gap = Option.map gap ~f:(fun gap -> {%css|gap: %{gap#Css_gen.Length};|}) in
     let attrs = Option.value ~default:[] attrs in
     {%html|
-        <div ?{maybe_gap} *{attrs} style="display: flex; flex-direction: row">
-          *{children}
-        </div>
-      |}
+      <div ?{maybe_gap} *{attrs} style="display: flex; flex-direction: row">
+        *{children}
+      </div>
+    |}
   ;;
 end
-
-let test vdom =
-  print_endline
-    (Virtual_dom_test_helpers.Node_helpers.to_string_html
-       (Virtual_dom_test_helpers.Node_helpers.unsafe_convert_exn vdom))
-;;
 
 let%expect_test "basic" =
   test {%html|<div></div>|};
   [%expect {| <div> </div> |}];
   test
     {%html|
-        <div>
-          <h1>Hello World</h1>
-          <ul>
-            <li>Capy1</li>
-            <li>Capy2</li>
-            <li>Capy3</li>
-            <li>Capy4</li>
-            <li>Capy5</li>
-            <li>Capy6</li>
-          </ul>
-        </div>
-      |};
+      <div>
+        <h1>Hello World</h1>
+        <ul>
+          <li>Capy1</li>
+          <li>Capy2</li>
+          <li>Capy3</li>
+          <li>Capy4</li>
+          <li>Capy5</li>
+          <li>Capy6</li>
+        </ul>
+      </div>
+    |};
   [%expect
     {|
     <div>
@@ -61,10 +56,10 @@ let%expect_test "basic" =
 let%expect_test "Tag interpolation" =
   test
     {%html|
-        <%{View.hbox ~gap:(`Rem 1.0)}>
-          <h1>Hello World</h1>
-        </>
-      |};
+      <%{View.hbox ~gap:(`Rem 1.0)}>
+        <h1>Hello World</h1>
+      </>
+    |};
   [%expect
     {|
     <div class="test_ppx_html_vdom__inline_class_hash_replaced_in_test test_ppx_html_vdom__inline_class_hash_replaced_in_test"
@@ -101,13 +96,13 @@ let%expect_test "Node list interpolation" =
   let capys = List.init 10 ~f:(fun i -> {%html|<li>Capy%{i#Int}</li>|}) in
   test
     {%html|
-        <div>
-          <h1>Capybaras</h1>
-          <ul>
-            *{capys}
-          </ul>
-        </div>
-      |};
+      <div>
+        <h1>Capybaras</h1>
+        <ul>
+          *{capys}
+        </ul>
+      </div>
+    |};
   [%expect
     {|
     <div>
@@ -132,13 +127,13 @@ let%expect_test "Node list interpolation (with module)" =
   let capys = List.init 10 ~f:(fun i -> {%string|Capy%{i#Int}|}) in
   test
     {%html|
-        <div>
-          <h1>Capybaras</h1>
-          <ul>
-            *{capys#String}
-          </ul>
-        </div>
-      |};
+      <div>
+        <h1>Capybaras</h1>
+        <ul>
+          *{capys#String}
+        </ul>
+      </div>
+    |};
   [%expect
     {|
     <div>
@@ -243,4 +238,19 @@ let%expect_test "string interpolation" =
   and animal = "rodent" in
   test {%html|<div>#{capy}'s are the world's largest #{animal}</div>|};
   [%expect {| <div> Capybara 's are the world's largest  rodent </div> |}]
+;;
+
+let%expect_test "Primitives do not conflict with node creators in SVG" =
+  test
+    {%html.Virtual_dom_svg|
+      <svg>
+        <text>This is a text node inside a text tag.</text>
+      </svg>
+    |};
+  [%expect
+    {|
+    <svg>
+      <text> This is a text node inside a text tag. </text>
+    </svg>
+    |}]
 ;;

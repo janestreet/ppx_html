@@ -1,13 +1,12 @@
 PPX_HTML
 ========
 
-<link rel="stylesheet" href="../ppx_css/readme-style.css">
-
 `ppx_html` is a PPX that lets you write HTML inside of OCaml 🐪 programs. It is
 spiritually similar to [JSX](<https://en.wikipedia.org/wiki/JSX_(JavaScript)>).
 
 (the type annotations are unnecessary and only for educational purposes.)
 
+<!-- $MDX skip -->
 ```ocaml
 {%html|
   <div %{centered : Vdom.Attr.t}>
@@ -21,6 +20,7 @@ spiritually similar to [JSX](<https://en.wikipedia.org/wiki/JSX_(JavaScript)>).
 
 is equivalent to:
 
+<!-- $MDX skip -->
 ```ocaml
 Vdom.Node.div
   ~attrs:[ centered ]
@@ -98,24 +98,41 @@ How can I use `Virtual_dom_svg`?
 To create `virtual_dom_svg` nodes instead of `virtual_dom_svg`, open
 `Virtual_dom_svg`'s `Html_syntax`:
 
+
+<!-- $MDX file=test/vdom_tests/test_vdom_svg_with_hyphens.ml,part=open-example -->
 ```ocaml
-let open Virtual_dom_svg.Html_syntax in
-{%html|
-<svg height="100" width="100">
-  <circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
-</svg>
-|}
+   let open Virtual_dom_svg.Html_syntax in
+   {%html|
+     <svg height=%{100.} width=%{100.}>
+       <circle
+         cx=%{50.}
+         cy=%{50.}
+         r=%{40.}
+         stroke=%{`Name "black"}
+         stroke_width=%{3.}
+         fill=%{`Name "red"}
+       ></circle>
+     </svg>
+   |}
 ```
 
 Alternatively, you can:
 
+<!-- $MDX file=test/vdom_tests/test_vdom_svg_with_hyphens.ml,part=inline-example -->
 ```ocaml
-[%html.Virtual_dom_svg {|
-<svg height="100" width="100">
-  <circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
-</svg>
-|}]
-
+    [%html.Virtual_dom_svg
+      {|
+        <svg height=%{100.} width=%{100.}>
+          <circle
+            cx=%{50.}
+            cy=%{50.}
+            r=%{40.}
+            stroke=%{`Name "black"}
+            stroke_width=%{3.}
+            fill=%{`Name "red"}
+          ></circle>
+        </svg>
+      |}]
 ```
 
 You can go back to using `virtual_dom` nodes by opening `Virtual_dom.Html_syntax`.
@@ -132,6 +149,7 @@ There is an `Html_syntax` for `lib/html` in the library `ppx_html_lib_html_synta
 2. Add the ppx `ppx_html_kernel` (different from `ppx_html`!) as a dependency to your preprocess field.
 3. After that you can use `ppx_html_kernel` by opening `ppx_html_lib_html_syntax`:
 
+<!-- $MDX skip -->
 ```ocaml
 open! Core
 open Ppx_html_lib_html_syntax.Html_syntax

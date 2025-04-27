@@ -42,21 +42,23 @@ module Type = struct
       (* ?{EXPR} *)
       [%expr
         match [%e expression] with
-        | None -> [%e Shared.attr_fn ~loc ~html_syntax_module "empty"]
+        | None -> [%e Shared.attr_fn ~loc ~html_syntax_module ~primitive:true "empty"]
         | Some x -> x]
     | Option, Some { loc = module_loc; txt = module_ } ->
       (* ?{EXPR#Module_} *)
       [%expr
         match [%e expression] with
-        | None -> [%e Shared.attr_fn ~loc ~html_syntax_module "empty"]
+        | None -> [%e Shared.attr_fn ~loc ~html_syntax_module ~primitive:true "empty"]
         | Some x -> [%e call_f ~loc:module_loc [%string "%{module_}.to_attr"]] x]
     | List, None ->
       (* *{EXPR} *)
-      [%expr [%e Shared.attr_fn ~loc ~html_syntax_module "many"] [%e expression]]
+      [%expr
+        [%e Shared.attr_fn ~loc ~html_syntax_module ~primitive:true "many"]
+          [%e expression]]
     | List, Some { loc = module_loc; txt = module_ } ->
       (* *{EXPR#Module_} *)
       [%expr
-        [%e Shared.attr_fn ~loc ~html_syntax_module "many"]
+        [%e Shared.attr_fn ~loc ~html_syntax_module ~primitive:true "many"]
           (Ppx_html_runtime.List.map
              [%e expression]
              ~f:[%e call_f ~loc:module_loc [%string "%{module_}.to_attr"]])]
@@ -72,7 +74,7 @@ module Type = struct
 
   let stringable_node ~expression ~html_syntax_module ~module_ =
     let loc = expression.pexp_loc in
-    let to_text = Shared.node_fn ~loc ~html_syntax_module "text" in
+    let to_text = Shared.node_fn ~loc ~html_syntax_module ~primitive:true "text" in
     let to_string = call_f ~loc:module_.loc [%string "%{module_.txt}.to_string"] in
     [%expr [%e to_text] ([%e to_string] [%e expression])]
   ;;
@@ -90,13 +92,13 @@ module Type = struct
         ~loc:module_.loc
         "#{} string intepolation cannot have a module identifier"
     | String, None ->
-      let to_text = Shared.node_fn ~loc ~html_syntax_module "text" in
+      let to_text = Shared.node_fn ~loc ~html_syntax_module ~primitive:true "text" in
       [%expr [%e to_text] [%e Merlin_helpers.focus_expression expression]]
     | Normal, None ->
       (match expression.pexp_desc with
        | Pexp_constant (Pconst_string _) ->
          (* %{"some constant"}*)
-         let to_text = Shared.node_fn ~loc ~html_syntax_module "text" in
+         let to_text = Shared.node_fn ~loc ~html_syntax_module ~primitive:true "text" in
          [%expr [%e to_text] [%e Merlin_helpers.focus_expression expression]]
        | _ ->
          (* %{EXPR} *)
@@ -108,22 +110,24 @@ module Type = struct
       (* ?{EXPR} *)
       [%expr
         match [%e expression] with
-        | None -> [%e Shared.node_fn ~loc ~html_syntax_module "none"]
+        | None -> [%e Shared.node_fn ~loc ~html_syntax_module ~primitive:true "none"]
         | Some x -> x]
     | Option, Some module_ ->
       (* ?{EXPR#Module_} *)
       [%expr
         match [%e expression] with
-        | None -> [%e Shared.node_fn ~loc ~html_syntax_module "none"]
+        | None -> [%e Shared.node_fn ~loc ~html_syntax_module ~primitive:true "none"]
         | Some x ->
           [%e stringable_node ~expression:[%expr x] ~html_syntax_module ~module_]]
     | List, None ->
       (* *{EXPR} *)
-      [%expr [%e Shared.node_fn ~loc ~html_syntax_module "fragment"] [%e expression]]
+      [%expr
+        [%e Shared.node_fn ~loc ~html_syntax_module ~primitive:true "fragment"]
+          [%e expression]]
     | List, Some module_ ->
       (* *{EXPR#Module_} *)
       [%expr
-        [%e Shared.node_fn ~loc ~html_syntax_module "fragment"]
+        [%e Shared.node_fn ~loc ~html_syntax_module ~primitive:true "fragment"]
           (Ppx_html_runtime.List.map [%e expression] ~f:(fun x ->
              [%e stringable_node ~expression:[%expr x] ~html_syntax_module ~module_]))]
   ;;

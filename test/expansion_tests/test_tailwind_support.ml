@@ -12,10 +12,10 @@ let%expect_test "basic expansion" =
       ~attrs:[([%tailwind "bg-white"] : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,2 +1,1
-    -|Html_syntax.Node.div
+    -1,2 +1,2
+      Html_syntax.Node.div
     -|  ~attrs:[([%tailwind "bg-white"] : Virtual_dom.Vdom.Attr.t)] []
-    +|Html_syntax.Node.div ~attrs:[Html_syntax.Attr.tailwind "bg-white"] []
+    +|  ~attrs:[((Html_syntax.Attr.tailwind)[@merlin.focus ]) "bg-white"] []
     |}]
 ;;
 
@@ -31,11 +31,12 @@ let%expect_test "multiple classes" =
       []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,2
+    -1,3 +1,3
       Html_syntax.Node.div
     -|  ~attrs:[([%tailwind "bg-white bg-black foo bar baz"] : Virtual_dom.Vdom.Attr.t)]
     -|  []
-    +|  ~attrs:[Html_syntax.Attr.tailwind "bg-white bg-black foo bar baz"] []
+    +|  ~attrs:[((Html_syntax.Attr.tailwind)[@merlin.focus ])
+    +|            "bg-white bg-black foo bar baz"] []
     |}]
 ;;
 
@@ -51,12 +52,13 @@ let%expect_test "multiple tailwind attrs" =
              ([%tailwind "bg-white foo bar baz"] : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,3
+    -1,3 +1,4
       Html_syntax.Node.div
     -|  ~attrs:[([%tailwind "bg-white"] : Virtual_dom.Vdom.Attr.t);
     -|         ([%tailwind "bg-white foo bar baz"] : Virtual_dom.Vdom.Attr.t)] []
-    +|  ~attrs:[Html_syntax.Attr.tailwind "bg-white";
-    +|         Html_syntax.Attr.tailwind "bg-white foo bar baz"] []
+    +|  ~attrs:[((Html_syntax.Attr.tailwind)[@merlin.focus ]) "bg-white";
+    +|         ((Html_syntax.Attr.tailwind)[@merlin.focus ]) "bg-white foo bar baz"]
+    +|  []
     |}]
 ;;
 
@@ -78,9 +80,9 @@ let%expect_test "No quotes" =
       ~attrs:[([%tailwind "bg-white"] : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,2 +1,1
-    -|Html_syntax.Node.div
+    -1,2 +1,2
+      Html_syntax.Node.div
     -|  ~attrs:[([%tailwind "bg-white"] : Virtual_dom.Vdom.Attr.t)] []
-    +|Html_syntax.Node.div ~attrs:[Html_syntax.Attr.tailwind "bg-white"] []
+    +|  ~attrs:[((Html_syntax.Attr.tailwind)[@merlin.focus ]) "bg-white"] []
     |}]
 ;;

@@ -42,38 +42,40 @@ let%expect_test "Bonsai's hello world HTML" =
     Html_syntax.Node.html
       [Html_syntax.Node.head
          [Html_syntax.Node.meta
-            ~attrs:[(Html_syntax.Attr.charset "UTF-8" : Virtual_dom.Vdom.Attr.t)]
-            ();
-         Html_syntax.Node.title [Html_syntax.Node.text "Hello, Bonsai!"];
+            ~attrs:[(((Html_syntax.Attr.charset)[@merlin.focus ]) "UTF-8" :
+                   Virtual_dom.Vdom.Attr.t)] ();
+         Html_syntax.Node.title
+           [Html_syntax.Node.Primitives.text "Hello, Bonsai!"];
          Html_syntax.Node.script
            ~attrs:[(Html_syntax.Attr.defer : Virtual_dom.Vdom.Attr.t);
-                  (Html_syntax.Attr.src "main.bc.js" : Virtual_dom.Vdom.Attr.t)]
-           []];
+                  (((Html_syntax.Attr.src)[@merlin.focus ]) "main.bc.js" :
+                  Virtual_dom.Vdom.Attr.t)] []];
       Html_syntax.Node.body
         [Html_syntax.Node.div
-           ~attrs:[(Html_syntax.Attr.id "app" : Virtual_dom.Vdom.Attr.t)] []]]
+           ~attrs:[(((Html_syntax.Attr.id)[@merlin.focus ]) "app" : Virtual_dom.Vdom.Attr.t)]
+           []]]
 
     PPX_HTML_KERNEL (diff):
-    -1,13 +1,8
+    -1,15 +1,12
       Html_syntax.Node.html
         [Html_syntax.Node.head
-    -|     [Html_syntax.Node.meta
-    -|        ~attrs:[(Html_syntax.Attr.charset "UTF-8" : Virtual_dom.Vdom.Attr.t)]
-    -|        ();
-    +|     [Html_syntax.Node.meta ~attrs:[Html_syntax.Attr.charset "UTF-8"] ();
-    -|     Html_syntax.Node.title [Html_syntax.Node.text "Hello, Bonsai!"];
-    -|     Html_syntax.Node.script
+           [Html_syntax.Node.meta
+    -|        ~attrs:[(((Html_syntax.Attr.charset)[@merlin.focus ]) "UTF-8" :
+    -|               Virtual_dom.Vdom.Attr.t)] ();
+    +|        ~attrs:[((Html_syntax.Attr.charset)[@merlin.focus ]) "UTF-8"] ();
+           Html_syntax.Node.title
+             [Html_syntax.Node.Primitives.text "Hello, Bonsai!"];
+           Html_syntax.Node.script
     -|       ~attrs:[(Html_syntax.Attr.defer : Virtual_dom.Vdom.Attr.t);
-    -|              (Html_syntax.Attr.src "main.bc.js" : Virtual_dom.Vdom.Attr.t)]
-    -|       []];
-    +|     Html_syntax.Node.title [Html_syntax.Node.text "Hello, Bonsai!"];
-    +|     Html_syntax.Node.script
-    +|       ~attrs:[Html_syntax.Attr.defer; Html_syntax.Attr.src "main.bc.js"] []];
-    -|  Html_syntax.Node.body
-    -|    [Html_syntax.Node.div
-    -|       ~attrs:[(Html_syntax.Attr.id "app" : Virtual_dom.Vdom.Attr.t)] []]]
-    +|  Html_syntax.Node.body
-    +|    [Html_syntax.Node.div ~attrs:[Html_syntax.Attr.id "app"] []]]
+    +|       ~attrs:[Html_syntax.Attr.defer;
+    -|              (((Html_syntax.Attr.src)[@merlin.focus ]) "main.bc.js" :
+    -|              Virtual_dom.Vdom.Attr.t)] []];
+    +|              ((Html_syntax.Attr.src)[@merlin.focus ]) "main.bc.js"] []];
+        Html_syntax.Node.body
+          [Html_syntax.Node.div
+    -|       ~attrs:[(((Html_syntax.Attr.id)[@merlin.focus ]) "app" : Virtual_dom.Vdom.Attr.t)]
+    -|       []]]
+    +|       ~attrs:[((Html_syntax.Attr.id)[@merlin.focus ]) "app"] []]]
     |}];
   (* NOTE: this is the instance that did not work (the difference is the <meta> element): *)
   Expect_test_helpers_core.require_does_raise (fun () ->
@@ -120,106 +122,126 @@ let%expect_test "Highcharts example" =
 
     PPX_HTML:
     Html_syntax.Node.html
-      ~attrs:[(Html_syntax.Attr.lang "en" : Virtual_dom.Vdom.Attr.t)]
+      ~attrs:[(((Html_syntax.Attr.lang)[@merlin.focus ]) "en" : Virtual_dom.Vdom.Attr.t)]
       [Html_syntax.Node.head
          [Html_syntax.Node.meta
-            ~attrs:[(Html_syntax.Attr.charset "UTF-8" : Virtual_dom.Vdom.Attr.t)]
-            ()];
+            ~attrs:[(((Html_syntax.Attr.charset)[@merlin.focus ]) "UTF-8" :
+                   Virtual_dom.Vdom.Attr.t)] ()];
       Html_syntax.Node.body
-        [Html_syntax.Node.h2 [Html_syntax.Node.text "Examples"];
+        [Html_syntax.Node.h2 [Html_syntax.Node.Primitives.text "Examples"];
         Html_syntax.Node.a
-          ~attrs:[(Html_syntax.Attr.href "simple.html" : Virtual_dom.Vdom.Attr.t)]
-          [Html_syntax.Node.text "Simple"];
+          ~attrs:[(((Html_syntax.Attr.href)[@merlin.focus ]) "simple.html" :
+                 Virtual_dom.Vdom.Attr.t)]
+          [Html_syntax.Node.Primitives.text "Simple"];
         Html_syntax.Node.br ();
         Html_syntax.Node.a
-          ~attrs:[(Html_syntax.Attr.href "simple_bonsai.html" : Virtual_dom.Vdom.Attr.t)]
-          [Html_syntax.Node.text "Simple Bonsai"];
+          ~attrs:[(((Html_syntax.Attr.href)[@merlin.focus ]) "simple_bonsai.html" :
+                 Virtual_dom.Vdom.Attr.t)]
+          [Html_syntax.Node.Primitives.text "Simple Bonsai"];
         Html_syntax.Node.br ();
         Html_syntax.Node.a
-          ~attrs:[(Html_syntax.Attr.href "bar_chart.html" : Virtual_dom.Vdom.Attr.t)]
-          [Html_syntax.Node.text "Bar chart"];
+          ~attrs:[(((Html_syntax.Attr.href)[@merlin.focus ]) "bar_chart.html" :
+                 Virtual_dom.Vdom.Attr.t)]
+          [Html_syntax.Node.Primitives.text "Bar chart"];
         Html_syntax.Node.br ();
         Html_syntax.Node.a
-          ~attrs:[(Html_syntax.Attr.href "custom_zoom.html" : Virtual_dom.Vdom.Attr.t)]
-          [Html_syntax.Node.text "Custom zoom"];
+          ~attrs:[(((Html_syntax.Attr.href)[@merlin.focus ]) "custom_zoom.html" :
+                 Virtual_dom.Vdom.Attr.t)]
+          [Html_syntax.Node.Primitives.text "Custom zoom"];
         Html_syntax.Node.br ();
         Html_syntax.Node.a
-          ~attrs:[(Html_syntax.Attr.href "custom_tooltip.html" : Virtual_dom.Vdom.Attr.t)]
-          [Html_syntax.Node.text "Custom tooltip"];
+          ~attrs:[(((Html_syntax.Attr.href)[@merlin.focus ])
+                     "custom_tooltip.html" : Virtual_dom.Vdom.Attr.t)]
+          [Html_syntax.Node.Primitives.text "Custom tooltip"];
         Html_syntax.Node.br ();
         Html_syntax.Node.a
-          ~attrs:[(Html_syntax.Attr.href "custom_tooltip_series.html" : Virtual_dom.Vdom.Attr.t)]
-          [Html_syntax.Node.text "Custom series specific tooltip"];
+          ~attrs:[(((Html_syntax.Attr.href)[@merlin.focus ])
+                     "custom_tooltip_series.html" : Virtual_dom.Vdom.Attr.t)]
+          [Html_syntax.Node.Primitives.text "Custom series specific tooltip"];
         Html_syntax.Node.br ();
         Html_syntax.Node.a
-          ~attrs:[(Html_syntax.Attr.href "heatmap.html" : Virtual_dom.Vdom.Attr.t)]
-          [Html_syntax.Node.text "Heatmap"];
+          ~attrs:[(((Html_syntax.Attr.href)[@merlin.focus ]) "heatmap.html" :
+                 Virtual_dom.Vdom.Attr.t)]
+          [Html_syntax.Node.Primitives.text "Heatmap"];
         Html_syntax.Node.br ();
         Html_syntax.Node.a
-          ~attrs:[(Html_syntax.Attr.href "point_click_callback.html" : Virtual_dom.Vdom.Attr.t)]
-          [Html_syntax.Node.text "Point click callback"];
+          ~attrs:[(((Html_syntax.Attr.href)[@merlin.focus ])
+                     "point_click_callback.html" : Virtual_dom.Vdom.Attr.t)]
+          [Html_syntax.Node.Primitives.text "Point click callback"];
         Html_syntax.Node.br ();
         Html_syntax.Node.a
-          ~attrs:[(Html_syntax.Attr.href "pie_chart.html" : Virtual_dom.Vdom.Attr.t)]
-          [Html_syntax.Node.text "Pie chart"];
+          ~attrs:[(((Html_syntax.Attr.href)[@merlin.focus ]) "pie_chart.html" :
+                 Virtual_dom.Vdom.Attr.t)]
+          [Html_syntax.Node.Primitives.text "Pie chart"];
         Html_syntax.Node.br ()]]
 
     PPX_HTML_KERNEL (diff):
-    -1,44 +1,34
+    -1,53 +1,44
     -|Html_syntax.Node.html
-    -|  ~attrs:[(Html_syntax.Attr.lang "en" : Virtual_dom.Vdom.Attr.t)]
-    +|Html_syntax.Node.html ~attrs:[Html_syntax.Attr.lang "en"]
+    -|  ~attrs:[(((Html_syntax.Attr.lang)[@merlin.focus ]) "en" : Virtual_dom.Vdom.Attr.t)]
+    +|Html_syntax.Node.html ~attrs:[((Html_syntax.Attr.lang)[@merlin.focus ]) "en"]
         [Html_syntax.Node.head
-    -|     [Html_syntax.Node.meta
-    -|        ~attrs:[(Html_syntax.Attr.charset "UTF-8" : Virtual_dom.Vdom.Attr.t)]
-    -|        ()];
-    +|     [Html_syntax.Node.meta ~attrs:[Html_syntax.Attr.charset "UTF-8"] ()];
+           [Html_syntax.Node.meta
+    -|        ~attrs:[(((Html_syntax.Attr.charset)[@merlin.focus ]) "UTF-8" :
+    -|               Virtual_dom.Vdom.Attr.t)] ()];
+    +|        ~attrs:[((Html_syntax.Attr.charset)[@merlin.focus ]) "UTF-8"] ()];
         Html_syntax.Node.body
-          [Html_syntax.Node.h2 [Html_syntax.Node.text "Examples"];
-    -|    Html_syntax.Node.a
-    -|      ~attrs:[(Html_syntax.Attr.href "simple.html" : Virtual_dom.Vdom.Attr.t)]
-    +|    Html_syntax.Node.a ~attrs:[Html_syntax.Attr.href "simple.html"]
-            [Html_syntax.Node.text "Simple"];
-          Html_syntax.Node.br ();
-    -|    Html_syntax.Node.a
-    -|      ~attrs:[(Html_syntax.Attr.href "simple_bonsai.html" : Virtual_dom.Vdom.Attr.t)]
-    +|    Html_syntax.Node.a ~attrs:[Html_syntax.Attr.href "simple_bonsai.html"]
-            [Html_syntax.Node.text "Simple Bonsai"];
-          Html_syntax.Node.br ();
-    -|    Html_syntax.Node.a
-    -|      ~attrs:[(Html_syntax.Attr.href "bar_chart.html" : Virtual_dom.Vdom.Attr.t)]
-    +|    Html_syntax.Node.a ~attrs:[Html_syntax.Attr.href "bar_chart.html"]
-            [Html_syntax.Node.text "Bar chart"];
-          Html_syntax.Node.br ();
-    -|    Html_syntax.Node.a
-    -|      ~attrs:[(Html_syntax.Attr.href "custom_zoom.html" : Virtual_dom.Vdom.Attr.t)]
-    +|    Html_syntax.Node.a ~attrs:[Html_syntax.Attr.href "custom_zoom.html"]
-            [Html_syntax.Node.text "Custom zoom"];
-          Html_syntax.Node.br ();
-    -|    Html_syntax.Node.a
-    -|      ~attrs:[(Html_syntax.Attr.href "custom_tooltip.html" : Virtual_dom.Vdom.Attr.t)]
-    +|    Html_syntax.Node.a ~attrs:[Html_syntax.Attr.href "custom_tooltip.html"]
-            [Html_syntax.Node.text "Custom tooltip"];
+          [Html_syntax.Node.h2 [Html_syntax.Node.Primitives.text "Examples"];
+          Html_syntax.Node.a
+    -|      ~attrs:[(((Html_syntax.Attr.href)[@merlin.focus ]) "simple.html" :
+    -|             Virtual_dom.Vdom.Attr.t)]
+    +|      ~attrs:[((Html_syntax.Attr.href)[@merlin.focus ]) "simple.html"]
+            [Html_syntax.Node.Primitives.text "Simple"];
           Html_syntax.Node.br ();
           Html_syntax.Node.a
-    -|      ~attrs:[(Html_syntax.Attr.href "custom_tooltip_series.html" : Virtual_dom.Vdom.Attr.t)]
-    +|      ~attrs:[Html_syntax.Attr.href "custom_tooltip_series.html"]
-            [Html_syntax.Node.text "Custom series specific tooltip"];
-          Html_syntax.Node.br ();
-    -|    Html_syntax.Node.a
-    -|      ~attrs:[(Html_syntax.Attr.href "heatmap.html" : Virtual_dom.Vdom.Attr.t)]
-    +|    Html_syntax.Node.a ~attrs:[Html_syntax.Attr.href "heatmap.html"]
-            [Html_syntax.Node.text "Heatmap"];
+    -|      ~attrs:[(((Html_syntax.Attr.href)[@merlin.focus ]) "simple_bonsai.html" :
+    -|             Virtual_dom.Vdom.Attr.t)]
+    +|      ~attrs:[((Html_syntax.Attr.href)[@merlin.focus ]) "simple_bonsai.html"]
+            [Html_syntax.Node.Primitives.text "Simple Bonsai"];
           Html_syntax.Node.br ();
           Html_syntax.Node.a
-    -|      ~attrs:[(Html_syntax.Attr.href "point_click_callback.html" : Virtual_dom.Vdom.Attr.t)]
-    +|      ~attrs:[Html_syntax.Attr.href "point_click_callback.html"]
-            [Html_syntax.Node.text "Point click callback"];
+    -|      ~attrs:[(((Html_syntax.Attr.href)[@merlin.focus ]) "bar_chart.html" :
+    -|             Virtual_dom.Vdom.Attr.t)]
+    +|      ~attrs:[((Html_syntax.Attr.href)[@merlin.focus ]) "bar_chart.html"]
+            [Html_syntax.Node.Primitives.text "Bar chart"];
           Html_syntax.Node.br ();
-    -|    Html_syntax.Node.a
-    -|      ~attrs:[(Html_syntax.Attr.href "pie_chart.html" : Virtual_dom.Vdom.Attr.t)]
-    +|    Html_syntax.Node.a ~attrs:[Html_syntax.Attr.href "pie_chart.html"]
-            [Html_syntax.Node.text "Pie chart"];
+          Html_syntax.Node.a
+    -|      ~attrs:[(((Html_syntax.Attr.href)[@merlin.focus ]) "custom_zoom.html" :
+    -|             Virtual_dom.Vdom.Attr.t)]
+    +|      ~attrs:[((Html_syntax.Attr.href)[@merlin.focus ]) "custom_zoom.html"]
+            [Html_syntax.Node.Primitives.text "Custom zoom"];
+          Html_syntax.Node.br ();
+          Html_syntax.Node.a
+    -|      ~attrs:[(((Html_syntax.Attr.href)[@merlin.focus ])
+    -|                 "custom_tooltip.html" : Virtual_dom.Vdom.Attr.t)]
+    +|      ~attrs:[((Html_syntax.Attr.href)[@merlin.focus ]) "custom_tooltip.html"]
+            [Html_syntax.Node.Primitives.text "Custom tooltip"];
+          Html_syntax.Node.br ();
+          Html_syntax.Node.a
+    -|      ~attrs:[(((Html_syntax.Attr.href)[@merlin.focus ])
+    +|      ~attrs:[((Html_syntax.Attr.href)[@merlin.focus ])
+    -|                 "custom_tooltip_series.html" : Virtual_dom.Vdom.Attr.t)]
+    +|                "custom_tooltip_series.html"]
+            [Html_syntax.Node.Primitives.text "Custom series specific tooltip"];
+          Html_syntax.Node.br ();
+          Html_syntax.Node.a
+    -|      ~attrs:[(((Html_syntax.Attr.href)[@merlin.focus ]) "heatmap.html" :
+    -|             Virtual_dom.Vdom.Attr.t)]
+    +|      ~attrs:[((Html_syntax.Attr.href)[@merlin.focus ]) "heatmap.html"]
+            [Html_syntax.Node.Primitives.text "Heatmap"];
+          Html_syntax.Node.br ();
+          Html_syntax.Node.a
+    -|      ~attrs:[(((Html_syntax.Attr.href)[@merlin.focus ])
+    +|      ~attrs:[((Html_syntax.Attr.href)[@merlin.focus ])
+    -|                 "point_click_callback.html" : Virtual_dom.Vdom.Attr.t)]
+    +|                "point_click_callback.html"]
+            [Html_syntax.Node.Primitives.text "Point click callback"];
+          Html_syntax.Node.br ();
+          Html_syntax.Node.a
+    -|      ~attrs:[(((Html_syntax.Attr.href)[@merlin.focus ]) "pie_chart.html" :
+    -|             Virtual_dom.Vdom.Attr.t)]
+    +|      ~attrs:[((Html_syntax.Attr.href)[@merlin.focus ]) "pie_chart.html"]
+            [Html_syntax.Node.Primitives.text "Pie chart"];
           Html_syntax.Node.br ()]]
     |}]
 ;;
