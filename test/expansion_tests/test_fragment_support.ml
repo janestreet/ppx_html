@@ -7,7 +7,7 @@ let%expect_test "Fragment support" =
     {|
     same output between ppx_html and ppx_html_kernel
 
-    Html_syntax.Node.fragment []
+    Html_syntax.Node.Primitives.fragment []
     |}]
 ;;
 
@@ -26,7 +26,8 @@ let%expect_test "Fragment support - does not get confused when interpolated tags
     {|
     same output between ppx_html and ppx_html_kernel
 
-    Html_syntax.Node.fragment
-      [EXPR [Html_syntax.Node.fragment [Html_syntax.Node.div []]]; EXPR2 []]
+    Html_syntax.Node.Primitives.fragment
+      [EXPR [Html_syntax.Node.Primitives.fragment [Html_syntax.Node.div []]];
+      EXPR2 []]
     |}]
 ;;

@@ -22,16 +22,16 @@ let generic_code
   let name_expr =
     match use_create with
     | true -> Shared.attr_fn_with_create ~loc:name.loc ~html_syntax_module name.txt
-    | false -> Shared.attr_fn ~loc:name.loc ~html_syntax_module name.txt
+    | false -> Shared.attr_fn ~loc:name.loc ~html_syntax_module ~primitive:false name.txt
   in
   let value_expression = value_to_expression ~html_syntax_module ~runtime_kind value in
-  [%expr [%e name_expr] [%e value_expression]]
+  [%expr [%e Merlin_helpers.focus_expression name_expr] [%e value_expression]]
 ;;
 
 let class_code ~loc ~html_syntax_module ~runtime_kind = function
   | Model.Attr.Value.Expr e ->
     [%expr
-      [%e Shared.attr_fn ~loc ~html_syntax_module "class_"]
+      [%e Shared.attr_fn ~loc ~html_syntax_module ~primitive:false "class_"]
         [%e Expr_code_gen.expr ~html_syntax_module ~runtime_kind e]]
   | Literal classes ->
     let e =
@@ -40,13 +40,13 @@ let class_code ~loc ~html_syntax_module ~runtime_kind = function
         Expr_code_gen.quote ~html_syntax_module ~runtime_kind class_)
       |> Ppxlib.Ast_builder.Default.elist ~loc
     in
-    [%expr [%e Shared.attr_fn ~loc ~html_syntax_module "classes"] [%e e]]
+    [%expr [%e Shared.attr_fn ~loc ~html_syntax_module ~primitive:false "classes"] [%e e]]
 ;;
 
 let style_code ~loc ~html_syntax_module ~runtime_kind = function
   | Model.Attr.Value.Expr e ->
     [%expr
-      [%e Shared.attr_fn ~loc ~html_syntax_module "style"]
+      [%e Shared.attr_fn ~loc ~html_syntax_module ~primitive:false "style"]
         [%e Expr_code_gen.expr ~html_syntax_module ~runtime_kind e]]
   | Literal css ->
     (match runtime_kind with
@@ -55,7 +55,14 @@ let style_code ~loc ~html_syntax_module ~runtime_kind = function
          let css_string_expression =
            C.pexp_constant
              ~loc:css.loc
-             (Pconst_string (Model.Quote.to_source css, css.loc, None))
+             (* [prettier] truncates trailing semicolons if the style attribute
+                is a single line. There's no way to change this in prettier. This is 
+                considered an error in the new parser, so we have to always append
+                a trailing semicolon to the end of the style block before passing it to
+                [ppx_css]. This should always be fine, as extraneous semicolons are parsed
+                and ignored.
+             *)
+             (Pconst_string (Model.Quote.to_source css ^ ";", css.loc, None))
          in
          [%expr [%css [%e css_string_expression]]])
      | Kernel ->
@@ -66,7 +73,8 @@ let style_code ~loc ~html_syntax_module ~runtime_kind = function
              (Pconst_string (Model.Quote.to_source css, css.loc, None))
          in
          [%expr
-           [%e Shared.attr_fn ~loc ~html_syntax_module "style"] [%e css_string_expression]]))
+           [%e Shared.attr_fn ~loc ~html_syntax_module ~primitive:false "style"]
+             [%e css_string_expression]]))
 ;;
 
 let tailwind_code ~loc = function

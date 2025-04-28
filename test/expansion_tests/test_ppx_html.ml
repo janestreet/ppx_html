@@ -7,7 +7,7 @@ let%expect_test "Hello world!" =
     {|
     same output between ppx_html and ppx_html_kernel
 
-    Html_syntax.Node.h1 [Html_syntax.Node.text "Hello World!"]
+    Html_syntax.Node.h1 [Html_syntax.Node.Primitives.text "Hello World!"]
     |}]
 ;;
 
@@ -21,8 +21,8 @@ let%expect_test "Nesting" =
     same output between ppx_html and ppx_html_kernel
 
     Html_syntax.Node.p
-      [Html_syntax.Node.text " Capybaras are ";
-      Html_syntax.Node.strong [Html_syntax.Node.text "cool"]]
+      [Html_syntax.Node.Primitives.text " Capybaras are ";
+      Html_syntax.Node.strong [Html_syntax.Node.Primitives.text "cool"]]
     |}]
 ;;
 
@@ -88,21 +88,23 @@ let%expect_test "Attributes" =
 
     PPX_HTML:
     Html_syntax.Node.h2
-      ~attrs:[(Html_syntax.Attr.class_ "menu-add-card-header" : Virtual_dom.Vdom.Attr.t);
-             (Html_syntax.Attr.height "20" : Virtual_dom.Vdom.Attr.t);
-             (Html_syntax.Attr.on_click
+      ~attrs:[(((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-header" :
+             Virtual_dom.Vdom.Attr.t);
+             (((Html_syntax.Attr.height)[@merlin.focus ]) "20" : Virtual_dom.Vdom.Attr.t);
+             (((Html_syntax.Attr.on_click)[@merlin.focus ])
                 (fun _ -> Effect.print_s ([%message "hello"])) : Virtual_dom.Vdom.Attr.t)]
       []
 
     PPX_HTML_KERNEL (diff):
-    -1,6 +1,5
+    -1,7 +1,5
       Html_syntax.Node.h2
-    -|  ~attrs:[(Html_syntax.Attr.class_ "menu-add-card-header" : Virtual_dom.Vdom.Attr.t);
-    -|         (Html_syntax.Attr.height "20" : Virtual_dom.Vdom.Attr.t);
-    -|         (Html_syntax.Attr.on_click
-    +|  ~attrs:[Html_syntax.Attr.class_ "menu-add-card-header";
-    +|         Html_syntax.Attr.height "20";
-    +|         Html_syntax.Attr.on_click
+    -|  ~attrs:[(((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-header" :
+    -|         Virtual_dom.Vdom.Attr.t);
+    -|         (((Html_syntax.Attr.height)[@merlin.focus ]) "20" : Virtual_dom.Vdom.Attr.t);
+    -|         (((Html_syntax.Attr.on_click)[@merlin.focus ])
+    +|  ~attrs:[((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-header";
+    +|         ((Html_syntax.Attr.height)[@merlin.focus ]) "20";
+    +|         ((Html_syntax.Attr.on_click)[@merlin.focus ])
     -|            (fun _ -> Effect.print_s ([%message "hello"])) : Virtual_dom.Vdom.Attr.t)]
     -|  []
     +|           (fun _ -> Effect.print_s ([%message "hello"]))] []
@@ -122,14 +124,17 @@ let%expect_test "Attributes and element tag interpolation" =
     PPX_HTML:
     ELEMENT_EXPR
       ~attrs:[(ATTRIBUTE_EXPR : Virtual_dom.Vdom.Attr.t);
-             (Html_syntax.Attr.foo DUMMY_ATTR_EXPR : Virtual_dom.Vdom.Attr.t)] []
+             (((Html_syntax.Attr.foo)[@merlin.focus ]) DUMMY_ATTR_EXPR :
+             Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,1
-    -|ELEMENT_EXPR
+    -1,4 +1,3
+      ELEMENT_EXPR
     -|  ~attrs:[(ATTRIBUTE_EXPR : Virtual_dom.Vdom.Attr.t);
-    -|         (Html_syntax.Attr.foo DUMMY_ATTR_EXPR : Virtual_dom.Vdom.Attr.t)] []
-    +|ELEMENT_EXPR ~attrs:[ATTRIBUTE_EXPR; Html_syntax.Attr.foo DUMMY_ATTR_EXPR] []
+    +|  ~attrs:[ATTRIBUTE_EXPR;
+    -|         (((Html_syntax.Attr.foo)[@merlin.focus ]) DUMMY_ATTR_EXPR :
+    -|         Virtual_dom.Vdom.Attr.t)] []
+    +|         ((Html_syntax.Attr.foo)[@merlin.focus ]) DUMMY_ATTR_EXPR] []
     |}]
 ;;
 
@@ -160,7 +165,7 @@ let%expect_test "Empty node" =
     {|
     same output between ppx_html and ppx_html_kernel
 
-    Html_syntax.Node.none
+    Html_syntax.Node.Primitives.none
     |}]
 ;;
 
@@ -170,7 +175,7 @@ let%expect_test "JSX fragment" =
     {|
     same output between ppx_html and ppx_html_kernel
 
-    Html_syntax.Node.fragment []
+    Html_syntax.Node.Primitives.fragment []
     |}]
 ;;
 
@@ -215,11 +220,11 @@ let%expect_test "Many classes used at once" =
       []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,1
-    -|Html_syntax.Node.div
+    -1,3 +1,2
+      Html_syntax.Node.div
     -|  ~attrs:[(Html_syntax.Attr.classes ["foo"; "bar"; "baz"] : Virtual_dom.Vdom.Attr.t)]
     -|  []
-    +|Html_syntax.Node.div ~attrs:[Html_syntax.Attr.class_ "foo bar baz"] []
+    +|  ~attrs:[((Html_syntax.Attr.class_)[@merlin.focus ]) "foo bar baz"] []
     |}]
 ;;
 
@@ -250,7 +255,7 @@ let%expect_test "classes with substitutions" =
     -|  ~attrs:[(Html_syntax.Attr.classes
     -|             [[%string "foo-%{(\"bar\")}-baz"]; "fizz"; ("other" : string)] :
     -|         Virtual_dom.Vdom.Attr.t)] []
-    +|  ~attrs:[Html_syntax.Attr.class_
+    +|  ~attrs:[((Html_syntax.Attr.class_)[@merlin.focus ])
     +|            ([%string "foo-%{(\"bar\")}-baz fizz %{(\"other\")}"])] []
     |}]
 ;;
@@ -275,44 +280,49 @@ let%expect_test "Complex-ish test case" =
     PPX_HTML:
     Html_syntax.Node.div
       ~attrs:[(Html_syntax.Attr.classes ["menu-add-card"] : Virtual_dom.Vdom.Attr.t);
-             (Html_syntax.Attr.on_click
+             (((Html_syntax.Attr.on_click)[@merlin.focus ])
                 (fun _ -> Effect.print_s ([%message "capybaras are cool"])) :
              Virtual_dom.Vdom.Attr.t)]
       [(title : Virtual_dom.Vdom.Node.t);
       Html_syntax.Node.span
-        ~attrs:[(Html_syntax.Attr.class_ "pill" : Virtual_dom.Vdom.Attr.t);
-               (Html_syntax.Attr.class_ "menu-add-card-verb" : Virtual_dom.Vdom.Attr.t)]
+        ~attrs:[(((Html_syntax.Attr.class_)[@merlin.focus ]) "pill" : Virtual_dom.Vdom.Attr.t);
+               (((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-verb" :
+               Virtual_dom.Vdom.Attr.t)]
         [(Vdom.Node.text verb : Virtual_dom.Vdom.Node.t)];
       Html_syntax.Node.span
-        ~attrs:[(Html_syntax.Attr.class_ "menu-add-card-text" : Virtual_dom.Vdom.Attr.t)]
+        ~attrs:[(((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-text" :
+               Virtual_dom.Vdom.Attr.t)]
         [(Vdom.Node.text text : Virtual_dom.Vdom.Node.t)];
       (help : Virtual_dom.Vdom.Node.t)]
 
     PPX_HTML_KERNEL (diff):
-    -1,14 +1,12
+    -1,16 +1,13
       Html_syntax.Node.div
     -|  ~attrs:[(Html_syntax.Attr.classes ["menu-add-card"] : Virtual_dom.Vdom.Attr.t);
-    -|         (Html_syntax.Attr.on_click
-    +|  ~attrs:[Html_syntax.Attr.class_ "menu-add-card";
-    +|         Html_syntax.Attr.on_click
+    -|         (((Html_syntax.Attr.on_click)[@merlin.focus ])
+    +|  ~attrs:[((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card";
+    +|         ((Html_syntax.Attr.on_click)[@merlin.focus ])
     -|            (fun _ -> Effect.print_s ([%message "capybaras are cool"])) :
     -|         Virtual_dom.Vdom.Attr.t)]
     -|  [(title : Virtual_dom.Vdom.Node.t);
     +|           (fun _ -> Effect.print_s ([%message "capybaras are cool"]))]
     +|  [title;
     -|  Html_syntax.Node.span
-    -|    ~attrs:[(Html_syntax.Attr.class_ "pill" : Virtual_dom.Vdom.Attr.t);
-    -|           (Html_syntax.Attr.class_ "menu-add-card-verb" : Virtual_dom.Vdom.Attr.t)]
-    -|    [(Vdom.Node.text verb : Virtual_dom.Vdom.Node.t)];
+    -|    ~attrs:[(((Html_syntax.Attr.class_)[@merlin.focus ]) "pill" : Virtual_dom.Vdom.Attr.t);
     +|  Html_syntax.Node.span
-    +|    ~attrs:[Html_syntax.Attr.class_ "pill";
-    +|           Html_syntax.Attr.class_ "menu-add-card-verb"]
+    +|    ~attrs:[((Html_syntax.Attr.class_)[@merlin.focus ]) "pill";
+    -|           (((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-verb" :
+    -|           Virtual_dom.Vdom.Attr.t)]
+    -|    [(Vdom.Node.text verb : Virtual_dom.Vdom.Node.t)];
+    +|           ((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-verb"]
     +|    [Vdom.Node.text verb];
     -|  Html_syntax.Node.span
-    -|    ~attrs:[(Html_syntax.Attr.class_ "menu-add-card-text" : Virtual_dom.Vdom.Attr.t)]
+    -|    ~attrs:[(((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-text" :
+    -|           Virtual_dom.Vdom.Attr.t)]
     -|    [(Vdom.Node.text text : Virtual_dom.Vdom.Node.t)];
     -|  (help : Virtual_dom.Vdom.Node.t)]
-    +|  Html_syntax.Node.span ~attrs:[Html_syntax.Attr.class_ "menu-add-card-text"]
+    +|  Html_syntax.Node.span
+    +|    ~attrs:[((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-text"]
     +|    [Vdom.Node.text text];
     +|  help]
     |}]
@@ -331,20 +341,20 @@ let%expect_test "Attrs that are OCaml keywords are special cased" =
     PPX_HTML:
     Html_syntax.Node.div
       ~attrs:[(Html_syntax.Attr.classes ["class"] : Virtual_dom.Vdom.Attr.t);
-             (Html_syntax.Attr.for_ "for" : Virtual_dom.Vdom.Attr.t);
-             (Html_syntax.Attr.type_ "type" : Virtual_dom.Vdom.Attr.t);
+             (((Html_syntax.Attr.for_)[@merlin.focus ]) "for" : Virtual_dom.Vdom.Attr.t);
+             (((Html_syntax.Attr.type_)[@merlin.focus ]) "type" : Virtual_dom.Vdom.Attr.t);
              (Html_syntax.Attr.open_ : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
     -1,5 +1,5
       Html_syntax.Node.div
     -|  ~attrs:[(Html_syntax.Attr.classes ["class"] : Virtual_dom.Vdom.Attr.t);
-    -|         (Html_syntax.Attr.for_ "for" : Virtual_dom.Vdom.Attr.t);
-    -|         (Html_syntax.Attr.type_ "type" : Virtual_dom.Vdom.Attr.t);
+    +|  ~attrs:[((Html_syntax.Attr.class_)[@merlin.focus ]) "class";
+    -|         (((Html_syntax.Attr.for_)[@merlin.focus ]) "for" : Virtual_dom.Vdom.Attr.t);
+    +|         ((Html_syntax.Attr.for_)[@merlin.focus ]) "for";
+    -|         (((Html_syntax.Attr.type_)[@merlin.focus ]) "type" : Virtual_dom.Vdom.Attr.t);
     -|         (Html_syntax.Attr.open_ : Virtual_dom.Vdom.Attr.t)] []
-    +|  ~attrs:[Html_syntax.Attr.class_ "class";
-    +|         Html_syntax.Attr.for_ "for";
-    +|         Html_syntax.Attr.type_ "type";
+    +|         ((Html_syntax.Attr.type_)[@merlin.focus ]) "type";
     +|         Html_syntax.Attr.open_] []
     |}]
 ;;
@@ -396,13 +406,15 @@ let%expect_test "className is not special handled" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      ~attrs:[(Html_syntax.Attr.className "foo" : Virtual_dom.Vdom.Attr.t)] []
+      ~attrs:[(((Html_syntax.Attr.className)[@merlin.focus ]) "foo" : Virtual_dom.Vdom.Attr.t)]
+      []
 
     PPX_HTML_KERNEL (diff):
-    -1,2 +1,1
-    -|Html_syntax.Node.div
-    -|  ~attrs:[(Html_syntax.Attr.className "foo" : Virtual_dom.Vdom.Attr.t)] []
-    +|Html_syntax.Node.div ~attrs:[Html_syntax.Attr.className "foo"] []
+    -1,3 +1,2
+      Html_syntax.Node.div
+    -|  ~attrs:[(((Html_syntax.Attr.className)[@merlin.focus ]) "foo" : Virtual_dom.Vdom.Attr.t)]
+    -|  []
+    +|  ~attrs:[((Html_syntax.Attr.className)[@merlin.focus ]) "foo"] []
     |}]
 ;;
 
@@ -418,16 +430,18 @@ let%expect_test "Duplicate attribute names." =
 
     PPX_HTML:
     Html_syntax.Node.div
-      ~attrs:[(Html_syntax.Attr.a "1" : Virtual_dom.Vdom.Attr.t);
-             (Html_syntax.Attr.a "2" : Virtual_dom.Vdom.Attr.t)] []
+      ~attrs:[(((Html_syntax.Attr.a)[@merlin.focus ]) "1" : Virtual_dom.Vdom.Attr.t);
+             (((Html_syntax.Attr.a)[@merlin.focus ]) "2" : Virtual_dom.Vdom.Attr.t)]
+      []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,2
-    -|Html_syntax.Node.div
-    -|  ~attrs:[(Html_syntax.Attr.a "1" : Virtual_dom.Vdom.Attr.t);
-    -|         (Html_syntax.Attr.a "2" : Virtual_dom.Vdom.Attr.t)] []
-    +|Html_syntax.Node.div ~attrs:[Html_syntax.Attr.a "1"; Html_syntax.Attr.a "2"]
-    +|  []
+    -1,4 +1,3
+      Html_syntax.Node.div
+    -|  ~attrs:[(((Html_syntax.Attr.a)[@merlin.focus ]) "1" : Virtual_dom.Vdom.Attr.t);
+    -|         (((Html_syntax.Attr.a)[@merlin.focus ]) "2" : Virtual_dom.Vdom.Attr.t)]
+    -|  []
+    +|  ~attrs:[((Html_syntax.Attr.a)[@merlin.focus ]) "1";
+    +|         ((Html_syntax.Attr.a)[@merlin.focus ]) "2"] []
     |}];
   test
     {|
@@ -443,11 +457,12 @@ let%expect_test "Duplicate attribute names." =
              (Html_syntax.Attr.classes ["bar"] : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,2
+    -1,3 +1,3
       Html_syntax.Node.div
     -|  ~attrs:[(Html_syntax.Attr.classes ["foo"] : Virtual_dom.Vdom.Attr.t);
     -|         (Html_syntax.Attr.classes ["bar"] : Virtual_dom.Vdom.Attr.t)] []
-    +|  ~attrs:[Html_syntax.Attr.class_ "foo"; Html_syntax.Attr.class_ "bar"] []
+    +|  ~attrs:[((Html_syntax.Attr.class_)[@merlin.focus ]) "foo";
+    +|         ((Html_syntax.Attr.class_)[@merlin.focus ]) "bar"] []
     |}]
 ;;
 
@@ -462,16 +477,18 @@ let%expect_test "Escaping of attribute strings" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      ~attrs:[(Html_syntax.Attr.no_quotes "1" : Virtual_dom.Vdom.Attr.t);
-             (Html_syntax.Attr.with_quotes "2" : Virtual_dom.Vdom.Attr.t)] []
+      ~attrs:[(((Html_syntax.Attr.no_quotes)[@merlin.focus ]) "1" : Virtual_dom.Vdom.Attr.t);
+             (((Html_syntax.Attr.with_quotes)[@merlin.focus ]) "2" : Virtual_dom.Vdom.Attr.t)]
+      []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,3
+    -1,4 +1,3
       Html_syntax.Node.div
-    -|  ~attrs:[(Html_syntax.Attr.no_quotes "1" : Virtual_dom.Vdom.Attr.t);
-    -|         (Html_syntax.Attr.with_quotes "2" : Virtual_dom.Vdom.Attr.t)] []
-    +|  ~attrs:[Html_syntax.Attr.no_quotes "1"; Html_syntax.Attr.with_quotes "2"]
-    +|  []
+    -|  ~attrs:[(((Html_syntax.Attr.no_quotes)[@merlin.focus ]) "1" : Virtual_dom.Vdom.Attr.t);
+    +|  ~attrs:[((Html_syntax.Attr.no_quotes)[@merlin.focus ]) "1";
+    -|         (((Html_syntax.Attr.with_quotes)[@merlin.focus ]) "2" : Virtual_dom.Vdom.Attr.t)]
+    -|  []
+    +|         ((Html_syntax.Attr.with_quotes)[@merlin.focus ]) "2"] []
     |}];
   (* This one handles escaped "\"" correctly. *)
   test
@@ -484,15 +501,18 @@ let%expect_test "Escaping of attribute strings" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      ~attrs:[(Html_syntax.Attr.two "\"\"" : Virtual_dom.Vdom.Attr.t);
-             (Html_syntax.Attr.one "\"" : Virtual_dom.Vdom.Attr.t)] []
+      ~attrs:[(((Html_syntax.Attr.two)[@merlin.focus ]) "\"\"" : Virtual_dom.Vdom.Attr.t);
+             (((Html_syntax.Attr.one)[@merlin.focus ]) "\"" : Virtual_dom.Vdom.Attr.t)]
+      []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,2
+    -1,4 +1,3
       Html_syntax.Node.div
-    -|  ~attrs:[(Html_syntax.Attr.two "\"\"" : Virtual_dom.Vdom.Attr.t);
-    -|         (Html_syntax.Attr.one "\"" : Virtual_dom.Vdom.Attr.t)] []
-    +|  ~attrs:[Html_syntax.Attr.two "\"\""; Html_syntax.Attr.one "\""] []
+    -|  ~attrs:[(((Html_syntax.Attr.two)[@merlin.focus ]) "\"\"" : Virtual_dom.Vdom.Attr.t);
+    -|         (((Html_syntax.Attr.one)[@merlin.focus ]) "\"" : Virtual_dom.Vdom.Attr.t)]
+    -|  []
+    +|  ~attrs:[((Html_syntax.Attr.two)[@merlin.focus ]) "\"\"";
+    +|         ((Html_syntax.Attr.one)[@merlin.focus ]) "\""] []
     |}]
 ;;
 
@@ -509,20 +529,21 @@ let%expect_test "ppx_html inside of ppx_html" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      ~attrs:[(Html_syntax.Attr.no_quotes "1" : Virtual_dom.Vdom.Attr.t);
-             (Html_syntax.Attr.with_quotes "2" : Virtual_dom.Vdom.Attr.t)]
-      [Html_syntax.Node.text " ";
+      ~attrs:[(((Html_syntax.Attr.no_quotes)[@merlin.focus ]) "1" : Virtual_dom.Vdom.Attr.t);
+             (((Html_syntax.Attr.with_quotes)[@merlin.focus ]) "2" : Virtual_dom.Vdom.Attr.t)]
+      [Html_syntax.Node.Primitives.text " ";
       ([%html {x|<p>hello</p>|x}] : Virtual_dom.Vdom.Node.t)]
 
     PPX_HTML_KERNEL (diff):
-    -1,5 +1,3
+    -1,5 +1,4
       Html_syntax.Node.div
-    -|  ~attrs:[(Html_syntax.Attr.no_quotes "1" : Virtual_dom.Vdom.Attr.t);
-    -|         (Html_syntax.Attr.with_quotes "2" : Virtual_dom.Vdom.Attr.t)]
-    +|  ~attrs:[Html_syntax.Attr.no_quotes "1"; Html_syntax.Attr.with_quotes "2"]
-    -|  [Html_syntax.Node.text " ";
+    -|  ~attrs:[(((Html_syntax.Attr.no_quotes)[@merlin.focus ]) "1" : Virtual_dom.Vdom.Attr.t);
+    -|         (((Html_syntax.Attr.with_quotes)[@merlin.focus ]) "2" : Virtual_dom.Vdom.Attr.t)]
+    +|  ~attrs:[((Html_syntax.Attr.no_quotes)[@merlin.focus ]) "1";
+    +|         ((Html_syntax.Attr.with_quotes)[@merlin.focus ]) "2"]
+    -|  [Html_syntax.Node.Primitives.text " ";
     -|  ([%html {x|<p>hello</p>|x}] : Virtual_dom.Vdom.Node.t)]
-    +|  [Html_syntax.Node.text " "; [%html {x|<p>hello</p>|x}]]
+    +|  [Html_syntax.Node.Primitives.text " "; [%html {x|<p>hello</p>|x}]]
     |}]
 ;;
 
@@ -544,27 +565,32 @@ let%expect_test "Childless HTML Tags" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      [Html_syntax.Node.text " Hello ";
+      [Html_syntax.Node.Primitives.text " Hello ";
       Html_syntax.Node.br ();
-      Html_syntax.Node.text " World! ";
+      Html_syntax.Node.Primitives.text " World! ";
       Html_syntax.Node.input
-        ~attrs:[(Html_syntax.Attr.type_ "checkbox" : Virtual_dom.Vdom.Attr.t)] ();
+        ~attrs:[(((Html_syntax.Attr.type_)[@merlin.focus ]) "checkbox" :
+               Virtual_dom.Vdom.Attr.t)] ();
       Html_syntax.Node.img
-        ~attrs:[(Html_syntax.Attr.src "./img.png" : Virtual_dom.Vdom.Attr.t)] ();
+        ~attrs:[(((Html_syntax.Attr.src)[@merlin.focus ]) "./img.png" : Virtual_dom.Vdom.Attr.t)]
+        ();
       Html_syntax.Node.hr ()]
 
     PPX_HTML_KERNEL (diff):
-    -1,9 +1,7
+    -1,11 +1,9
       Html_syntax.Node.div
-        [Html_syntax.Node.text " Hello ";
+        [Html_syntax.Node.Primitives.text " Hello ";
         Html_syntax.Node.br ();
-        Html_syntax.Node.text " World! ";
-    -|  Html_syntax.Node.input
-    -|    ~attrs:[(Html_syntax.Attr.type_ "checkbox" : Virtual_dom.Vdom.Attr.t)] ();
-    +|  Html_syntax.Node.input ~attrs:[Html_syntax.Attr.type_ "checkbox"] ();
+        Html_syntax.Node.Primitives.text " World! ";
+        Html_syntax.Node.input
+    -|    ~attrs:[(((Html_syntax.Attr.type_)[@merlin.focus ]) "checkbox" :
+    -|           Virtual_dom.Vdom.Attr.t)] ();
+    +|    ~attrs:[((Html_syntax.Attr.type_)[@merlin.focus ]) "checkbox"] ();
     -|  Html_syntax.Node.img
-    -|    ~attrs:[(Html_syntax.Attr.src "./img.png" : Virtual_dom.Vdom.Attr.t)] ();
-    +|  Html_syntax.Node.img ~attrs:[Html_syntax.Attr.src "./img.png"] ();
+    -|    ~attrs:[(((Html_syntax.Attr.src)[@merlin.focus ]) "./img.png" : Virtual_dom.Vdom.Attr.t)]
+    -|    ();
+    +|  Html_syntax.Node.img
+    +|    ~attrs:[((Html_syntax.Attr.src)[@merlin.focus ]) "./img.png"] ();
         Html_syntax.Node.hr ()]
     |}]
 ;;
@@ -609,21 +635,21 @@ let%expect_test "Quoted strings inside of element's body work" =
     {|
     same output between ppx_html and ppx_html_kernel
 
-    Html_syntax.Node.text " \"hello\" "
+    Html_syntax.Node.Primitives.text " \"hello\" "
     |}];
   test {| <div>"hello world"</div> |};
   [%expect
     {|
     same output between ppx_html and ppx_html_kernel
 
-    Html_syntax.Node.div [Html_syntax.Node.text "\"hello world\""]
+    Html_syntax.Node.div [Html_syntax.Node.Primitives.text "\"hello world\""]
     |}];
   test {| <div>"hello world"</div> |};
   [%expect
     {|
     same output between ppx_html and ppx_html_kernel
 
-    Html_syntax.Node.div [Html_syntax.Node.text "\"hello world\""]
+    Html_syntax.Node.div [Html_syntax.Node.Primitives.text "\"hello world\""]
     |}]
 ;;
 
@@ -633,7 +659,7 @@ let%expect_test "Other forms of html escaping" =
     {|
     same output between ppx_html and ppx_html_kernel
 
-    Html_syntax.Node.div [Html_syntax.Node.text "& \" ' // "]
+    Html_syntax.Node.div [Html_syntax.Node.Primitives.text "& \" ' // "]
     |}]
 ;;
 

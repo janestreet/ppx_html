@@ -12,15 +12,16 @@ let%expect_test "Style" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      ~attrs:[([%css "background-color: tomato"] : Virtual_dom.Vdom.Attr.t)]
-      [Html_syntax.Node.text " "]
+      ~attrs:[([%css "background-color: tomato;"] : Virtual_dom.Vdom.Attr.t)]
+      [Html_syntax.Node.Primitives.text " "]
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,3
+    -1,3 +1,4
       Html_syntax.Node.div
-    -|  ~attrs:[([%css "background-color: tomato"] : Virtual_dom.Vdom.Attr.t)]
-    +|  ~attrs:[Html_syntax.Attr.style "background-color: tomato"]
-        [Html_syntax.Node.text " "]
+    -|  ~attrs:[([%css "background-color: tomato;"] : Virtual_dom.Vdom.Attr.t)]
+    +|  ~attrs:[((Html_syntax.Attr.style)[@merlin.focus ])
+    +|            "background-color: tomato"]
+        [Html_syntax.Node.Primitives.text " "]
     |}]
 ;;
 
@@ -35,17 +36,17 @@ let%expect_test "Many styles" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      ~attrs:[([%css "background-color: tomato; background-color: red"] :
-             Virtual_dom.Vdom.Attr.t)] [Html_syntax.Node.text " "]
+      ~attrs:[([%css "background-color: tomato; background-color: red;"] :
+             Virtual_dom.Vdom.Attr.t)] [Html_syntax.Node.Primitives.text " "]
 
     PPX_HTML_KERNEL (diff):
     -1,3 +1,4
       Html_syntax.Node.div
-    -|  ~attrs:[([%css "background-color: tomato; background-color: red"] :
-    -|         Virtual_dom.Vdom.Attr.t)] [Html_syntax.Node.text " "]
-    +|  ~attrs:[Html_syntax.Attr.style
+    -|  ~attrs:[([%css "background-color: tomato; background-color: red;"] :
+    -|         Virtual_dom.Vdom.Attr.t)] [Html_syntax.Node.Primitives.text " "]
+    +|  ~attrs:[((Html_syntax.Attr.style)[@merlin.focus ])
     +|            "background-color: tomato; background-color: red"]
-    +|  [Html_syntax.Node.text " "]
+    +|  [Html_syntax.Node.Primitives.text " "]
     |}]
 ;;
 
@@ -61,18 +62,18 @@ let%expect_test "Interpolation within styles" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      ~attrs:[([%css "background-color: tomato; background-color: %{(color)}"] :
-             Virtual_dom.Vdom.Attr.t)] [Html_syntax.Node.text " "]
+      ~attrs:[([%css "background-color: tomato; background-color: %{(color)};"] :
+             Virtual_dom.Vdom.Attr.t)] [Html_syntax.Node.Primitives.text " "]
 
     PPX_HTML_KERNEL (diff):
     -1,3 +1,5
       Html_syntax.Node.div
-    -|  ~attrs:[([%css "background-color: tomato; background-color: %{(color)}"] :
-    -|         Virtual_dom.Vdom.Attr.t)] [Html_syntax.Node.text " "]
-    +|  ~attrs:[Html_syntax.Attr.style
+    -|  ~attrs:[([%css "background-color: tomato; background-color: %{(color)};"] :
+    -|         Virtual_dom.Vdom.Attr.t)] [Html_syntax.Node.Primitives.text " "]
+    +|  ~attrs:[((Html_syntax.Attr.style)[@merlin.focus ])
     +|            ([%string
     +|               "background-color: tomato; background-color: %{(color)}"])]
-    +|  [Html_syntax.Node.text " "]
+    +|  [Html_syntax.Node.Primitives.text " "]
     |}]
 ;;
 
@@ -89,14 +90,14 @@ let%expect_test "Whole-sale interpolation does not call ppx_css" =
     PPX_HTML:
     Html_syntax.Node.div
       ~attrs:[(Html_syntax.Attr.style Css_gen.foo : Virtual_dom.Vdom.Attr.t)]
-      [Html_syntax.Node.text " "]
+      [Html_syntax.Node.Primitives.text " "]
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,2
-    -|Html_syntax.Node.div
+    -1,3 +1,3
+      Html_syntax.Node.div
     -|  ~attrs:[(Html_syntax.Attr.style Css_gen.foo : Virtual_dom.Vdom.Attr.t)]
-    +|Html_syntax.Node.div ~attrs:[Html_syntax.Attr.style Css_gen.foo]
-        [Html_syntax.Node.text " "]
+    +|  ~attrs:[((Html_syntax.Attr.style)[@merlin.focus ]) Css_gen.foo]
+        [Html_syntax.Node.Primitives.text " "]
     |}]
 ;;
 
@@ -111,15 +112,15 @@ let%expect_test "PPX CSS's interpolation syntax" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      ~attrs:[([%css "background-color: %{(color)#Color}"] : Virtual_dom.Vdom.Attr.t)]
-      [Html_syntax.Node.text " "]
+      ~attrs:[([%css "background-color: %{(color)#Color};"] : Virtual_dom.Vdom.Attr.t)]
+      [Html_syntax.Node.Primitives.text " "]
 
     PPX_HTML_KERNEL (diff):
     -1,3 +1,4
       Html_syntax.Node.div
-    -|  ~attrs:[([%css "background-color: %{(color)#Color}"] : Virtual_dom.Vdom.Attr.t)]
-    +|  ~attrs:[Html_syntax.Attr.style
+    -|  ~attrs:[([%css "background-color: %{(color)#Color};"] : Virtual_dom.Vdom.Attr.t)]
+    +|  ~attrs:[((Html_syntax.Attr.style)[@merlin.focus ])
     +|            ([%string "background-color: %{(color)#Color}"])]
-        [Html_syntax.Node.text " "]
+        [Html_syntax.Node.Primitives.text " "]
     |}]
 ;;

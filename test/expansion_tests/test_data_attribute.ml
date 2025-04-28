@@ -9,15 +9,16 @@ let%expect_test "data-test attribute" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      ~attrs:[((Html_syntax.Attr.create "data-test") "foo" : Virtual_dom.Vdom.Attr.t)]
-      []
+      ~attrs:[(((Html_syntax.Attr.Primitives.create "data-test")[@merlin.focus ])
+                 "foo" : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,1
-    -|Html_syntax.Node.div
-    -|  ~attrs:[((Html_syntax.Attr.create "data-test") "foo" : Virtual_dom.Vdom.Attr.t)]
-    -|  []
-    +|Html_syntax.Node.div ~attrs:[(Html_syntax.Attr.create "data-test") "foo"] []
+    -1,3 +1,3
+      Html_syntax.Node.div
+    -|  ~attrs:[(((Html_syntax.Attr.Primitives.create "data-test")[@merlin.focus ])
+    +|  ~attrs:[((Html_syntax.Attr.Primitives.create "data-test")[@merlin.focus ])
+    -|             "foo" : Virtual_dom.Vdom.Attr.t)] []
+    +|            "foo"] []
     |}]
 ;;
 
@@ -29,15 +30,16 @@ let%expect_test "data-test attribute with interpolation" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      ~attrs:[((Html_syntax.Attr.create "data-test") foo : Virtual_dom.Vdom.Attr.t)]
-      []
+      ~attrs:[(((Html_syntax.Attr.Primitives.create "data-test")[@merlin.focus ])
+                 foo : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,1
-    -|Html_syntax.Node.div
-    -|  ~attrs:[((Html_syntax.Attr.create "data-test") foo : Virtual_dom.Vdom.Attr.t)]
-    -|  []
-    +|Html_syntax.Node.div ~attrs:[(Html_syntax.Attr.create "data-test") foo] []
+    -1,3 +1,3
+      Html_syntax.Node.div
+    -|  ~attrs:[(((Html_syntax.Attr.Primitives.create "data-test")[@merlin.focus ])
+    -|             foo : Virtual_dom.Vdom.Attr.t)] []
+    +|  ~attrs:[((Html_syntax.Attr.Primitives.create "data-test")[@merlin.focus ])
+    +|            foo] []
     |}];
   test {|<div data-test="hi__%{foo}"></div>|};
   [%expect
@@ -46,16 +48,16 @@ let%expect_test "data-test attribute with interpolation" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      ~attrs:[((Html_syntax.Attr.create "data-test") ([%string "hi__%{(foo)}"]) :
-             Virtual_dom.Vdom.Attr.t)] []
+      ~attrs:[(((Html_syntax.Attr.Primitives.create "data-test")[@merlin.focus ])
+                 ([%string "hi__%{(foo)}"]) : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
     -1,3 +1,3
       Html_syntax.Node.div
-    -|  ~attrs:[((Html_syntax.Attr.create "data-test") ([%string "hi__%{(foo)}"]) :
-    -|         Virtual_dom.Vdom.Attr.t)] []
-    +|  ~attrs:[(Html_syntax.Attr.create "data-test") ([%string "hi__%{(foo)}"])]
-    +|  []
+    -|  ~attrs:[(((Html_syntax.Attr.Primitives.create "data-test")[@merlin.focus ])
+    +|  ~attrs:[((Html_syntax.Attr.Primitives.create "data-test")[@merlin.focus ])
+    -|             ([%string "hi__%{(foo)}"]) : Virtual_dom.Vdom.Attr.t)] []
+    +|            ([%string "hi__%{(foo)}"])] []
     |}]
 ;;
 
@@ -67,15 +69,16 @@ let%expect_test "other kinds of data-* attributes" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      ~attrs:[((Html_syntax.Attr.create "data-columns") "foo" : Virtual_dom.Vdom.Attr.t)]
-      []
+      ~attrs:[(((Html_syntax.Attr.Primitives.create "data-columns")
+                 [@merlin.focus ]) "foo" : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,2
-    -|Html_syntax.Node.div
-    -|  ~attrs:[((Html_syntax.Attr.create "data-columns") "foo" : Virtual_dom.Vdom.Attr.t)]
-    +|Html_syntax.Node.div ~attrs:[(Html_syntax.Attr.create "data-columns") "foo"]
-        []
+    -1,3 +1,3
+      Html_syntax.Node.div
+    -|  ~attrs:[(((Html_syntax.Attr.Primitives.create "data-columns")
+    +|  ~attrs:[((Html_syntax.Attr.Primitives.create "data-columns")
+    -|             [@merlin.focus ]) "foo" : Virtual_dom.Vdom.Attr.t)] []
+    +|            [@merlin.focus ]) "foo"] []
     |}];
   test {|<div data-rows=foo></div>|};
   [%expect
@@ -84,15 +87,16 @@ let%expect_test "other kinds of data-* attributes" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      ~attrs:[((Html_syntax.Attr.create "data-rows") "foo" : Virtual_dom.Vdom.Attr.t)]
-      []
+      ~attrs:[(((Html_syntax.Attr.Primitives.create "data-rows")[@merlin.focus ])
+                 "foo" : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,1
-    -|Html_syntax.Node.div
-    -|  ~attrs:[((Html_syntax.Attr.create "data-rows") "foo" : Virtual_dom.Vdom.Attr.t)]
-    -|  []
-    +|Html_syntax.Node.div ~attrs:[(Html_syntax.Attr.create "data-rows") "foo"] []
+    -1,3 +1,3
+      Html_syntax.Node.div
+    -|  ~attrs:[(((Html_syntax.Attr.Primitives.create "data-rows")[@merlin.focus ])
+    +|  ~attrs:[((Html_syntax.Attr.Primitives.create "data-rows")[@merlin.focus ])
+    -|             "foo" : Virtual_dom.Vdom.Attr.t)] []
+    +|            "foo"] []
     |}]
 ;;
 

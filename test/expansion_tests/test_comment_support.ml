@@ -13,7 +13,8 @@ let%expect_test "Comments are supported" =
     same output between ppx_html and ppx_html_kernel
 
     Html_syntax.Node.div
-      [Html_syntax.Node.text " Capybaras are the world's largest living rodent. "]
+      [Html_syntax.Node.Primitives.text
+         " Capybaras are the world's largest living rodent. "]
     |}]
 ;;
 
@@ -31,7 +32,9 @@ let%expect_test "Commments in between things." =
     same output between ppx_html and ppx_html_kernel
 
     Html_syntax.Node.div
-      [Html_syntax.Node.text " Capybaras are the world's largest living rodent. ";
-      Html_syntax.Node.text " Capybaras are the world's largest living rodent. "]
+      [Html_syntax.Node.Primitives.text
+         " Capybaras are the world's largest living rodent. ";
+      Html_syntax.Node.Primitives.text
+        " Capybaras are the world's largest living rodent. "]
     |}]
 ;;
