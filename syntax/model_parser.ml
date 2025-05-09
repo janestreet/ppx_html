@@ -264,17 +264,27 @@ let parse_expr_common ~locs : interpolation Angstrom.t =
      in
      let string_relative_location = { String_relative_location.start; end_ = end_ - 1 } in
      fun loc ->
-       let expr = { Expr.expr; code; to_t; loc; string_relative_location } in
+       let expr =
+         { Expr.expr; code; to_t; loc; string_relative_location; escape_kind = Escaped }
+       in
        { expr; interpolation_kind })
 ;;
 
 let skip_while1 f = skip f *> skip_while f
 let take_span_while1 ~locs f = with_loc ~locs (take_while1 f)
+let is_capitalized s = (not (String.is_empty s)) && Char.is_uppercase s.[0]
 
-let parse_name ~allow_hyphens ~expected ~locs : string Loc.t Angstrom.t =
+let parse_name ~allow_hyphens ~allow_dots ~expected ~locs : string Loc.t Angstrom.t =
   take_span_while1 ~locs (function
     | '_' -> true
-    | c -> Char.is_alphanum c || (allow_hyphens && Char.equal c '-'))
+    | c ->
+      Char.is_alphanum c
+      || Char.equal c '\''
+      || (allow_hyphens && Char.equal c '-')
+      (* NOTE: We want to allow dots for the "component" syntax:
+
+         e.g. <Foo.f></> *)
+      || (allow_dots && Char.equal c '.'))
   <|> (peek_char
        >>= fun c ->
        let but =
@@ -292,7 +302,7 @@ let parse_name ~allow_hyphens ~expected ~locs : string Loc.t Angstrom.t =
 ;;
 
 let parse_ocaml_name = parse_name ~allow_hyphens:false
-let parse_attr_name = parse_name ~allow_hyphens:true
+let parse_attr_name = parse_name ~allow_hyphens:true ~allow_dots:false
 
 let parse_html_token ~locs : string Loc.t Angstrom.t =
   take_span_while1 ~locs (function
@@ -320,6 +330,8 @@ let interpolation_case =
   choice
     [ "%{" => `Expression; "?{" => `Expression; "*{" => `Expression; "#{" => `Expression ]
 ;;
+
+let argument_case = choice [ "~" => `Argument `Tilde; "?" => `Argument `Question_mark ]
 
 let parse_quote ~locs : Model.Quote.t Angstrom.t =
   let quoted =
@@ -391,7 +403,7 @@ let parse_attr_expr ~locs =
 let parse_attr ~locs : Model.Attr.t Angstrom.t =
   with_loc'
     ~locs
-    (match%bind choice [ interpolation_case; return `Attr_name ] with
+    (match%bind choice [ interpolation_case; argument_case; return `Attr_name ] with
      | `Attr_name ->
        let%bind name = parse_attr_name ~expected:"name of attribute" ~locs in
        let%bind value =
@@ -404,6 +416,26 @@ let parse_attr ~locs : Model.Attr.t Angstrom.t =
        in
        let ret loc = Model.Attr.Attr { name; value; loc } in
        return ret
+     | `Argument sigil ->
+       let%map sigil =
+         match sigil with
+         | `Tilde -> string "~" *> return Model.Attr.Sigil.Tilde
+         | `Question_mark -> string "?" *> return Model.Attr.Sigil.Question_mark
+       and name = parse_attr_name ~expected:"name of argument" ~locs
+       and argument =
+         match%bind choice [ ":" => `With_payload; return `Punned ] with
+         | `Punned -> return None
+         | `With_payload ->
+           let%bind () = string ":" *> return () in
+           (match%bind choice [ "%{" => `Interpolation; return `Unknown ] with
+            | `Unknown ->
+              fail ~locs "Error. Expected an OCaml interpolation here (e.g. %{})"
+            | `Interpolation ->
+              let%bind { expr; interpolation_kind } = parse_expr_common ~locs in
+              only_normal_interpolation_allowed ~locs ~interpolation_kind (Some expr))
+       in
+       let ret loc = Model.Attr.Argument { name; argument; loc; sigil } in
+       ret
      | `Expression ->
        let%map expr = parse_attr_expr ~locs in
        fun _ -> expr)
@@ -421,8 +453,15 @@ let parse_tag ~locs : Model.Tag.t Angstrom.t =
     let%map { txt = (); loc } = with_loc ~locs (return ()) in
     Model.Tag.Fragment loc
   | `Literal ->
-    let%map atom = parse_ocaml_name ~expected:"HTML tag" ~locs in
-    Model.Tag.Literal atom
+    let%map start = pos
+    and atom = parse_ocaml_name ~expected:"HTML tag" ~locs ~allow_dots:true
+    and end_ = pos in
+    (match String.mem atom.txt '.' || is_capitalized atom.txt with
+     | false -> Model.Tag.Literal (Literal atom)
+     | true ->
+       let name = { atom with txt = Ppxlib.Longident.parse atom.txt }
+       and string_relative_location = { String_relative_location.start; end_ } in
+       Model.Tag.Literal (Component { name; string_relative_location; code = atom }))
 ;;
 
 let skip_opt_ws = skip_while Char.is_whitespace
@@ -471,7 +510,8 @@ let many_nodes ~parse_node =
 let fail_with_closing_tag ~(tag : Tag.t) ~locs =
   let element =
     match tag with
-    | Literal { txt; _ } -> [%string {|element "%{txt}"|}]
+    | Literal (Literal { txt; _ } | Component { name = _; code = { txt; _ }; _ }) ->
+      [%string {|element "%{txt}"|}]
     | Expr _ -> "element"
     | Fragment _ -> "fragment"
   in
@@ -522,13 +562,16 @@ let parse_element ~(parse_node : Node.t t) ~locs : Node.t Angstrom.t =
        lazy
          (let tag =
             match tag with
-            | Model.Tag.Literal { txt; _ } -> txt
+            | Model.Tag.Literal
+                ( Literal { txt; _ }
+                | Component { name = _; code = { txt; _ }; string_relative_location = _ }
+                  ) -> txt
             | Model.Tag.Expr { expr; _ } -> Pprintast.string_of_expression expr
             | Model.Tag.Fragment _ -> "fragment (<></>)"
           in
           [%string {|No closing tag, but expected one for '%{tag}'|}])
      in
-     let%map inner, close_string_relative_location =
+     let%map inner, closing_tag =
        if closed
        then return (None, None)
        else (
@@ -544,43 +587,78 @@ let parse_element ~(parse_node : Node.t t) ~locs : Node.t Angstrom.t =
            and () = char '/' in
            ()
          and () = skip_opt_ws
-         and close_tag = option (parse_ocaml_name ~expected:"HTML tag" ~locs)
+         and close_tag =
+           option (parse_ocaml_name ~expected:"HTML tag" ~locs ~allow_dots:true)
          and () = skip_opt_ws
          and close_end = pos
          and () = char '>' <|> fail_with_closing_tag ~tag ~locs in
-         let open_tag =
+         let open struct
+           (* NOTE: This is a bit complex.  There are roughly three scenarios:
+
+              - "Normal" tags, (e.g. <div></div>): The closing tag _must_ match the opening
+                tag.
+
+              - "Interpolated" tags/Fragments (e.g. <></> or <%{F}></>): The
+                closing tag _must_ be empty.
+
+              - "Component" tags (e.g. <Foo.f></> or <Foo.f></Foo.f>): The closing tag may
+                be empty or must match the opening tag.
+           *)
+           type expected_closing_tag =
+             | Empty
+             | Empty_or_string of string
+             | String of string
+         end in
+         let expected_closing_tag =
            match tag with
-           | Tag.Literal tag -> tag.txt
-           | Expr _ -> ""
-           | Fragment _ -> ""
+           | Tag.Literal (Literal tag) -> String tag.txt
+           | Literal (Component { name; string_relative_location = _; code = _ }) ->
+             Empty_or_string (Ppxlib.Longident.name name.txt)
+           | Expr _ -> Empty
+           | Fragment _ -> Empty
          in
-         let close_tag =
-           match close_tag with
-           | None -> ""
-           | Some close_tag -> close_tag.txt
+         let ok =
+           lazy
+             (let loc =
+                { String_relative_location.start = close_start; end_ = close_end }
+              in
+              let is_fragment_like =
+                match close_tag with
+                | Some { txt = ""; loc = _ } | None -> true
+                | _ -> false
+              in
+              return (Some inner, Some { Closing_tag.loc; is_fragment_like }))
          in
-         if String.( <> ) open_tag close_tag
-         then
-           fail
-             ~start:close_start
-             ~end_:close_end
-             ~locs
-             [%string "Expected closing tag </%{open_tag}>, got </%{close_tag}>"]
-         else
-           return
-             ( Some inner
-             , Some { String_relative_location.start = close_start; end_ = close_end } ))
+         let fail message = fail ~start:close_start ~end_:close_end ~locs message in
+         match expected_closing_tag with
+         | Empty ->
+           (match close_tag with
+            | None -> force ok
+            | Some wrong ->
+              fail
+                [%string "Expected an empty (</>) closing tag, but got </%{wrong.txt}>."])
+         | String expected ->
+           (match close_tag with
+            | None ->
+              fail
+                [%string "Expected </%{expected}>, but got an empty closing tag (</>)."]
+            | Some { txt = got; loc = _ } ->
+              if String.equal got expected
+              then force ok
+              else
+                fail [%string "Expected closing tag </%{expected}>, but got </%{got}>."])
+         | Empty_or_string expected ->
+           (match close_tag with
+            | None -> force ok
+            | Some { txt = got; loc = _ } ->
+              if String.equal got expected
+              then force ok
+              else
+                fail [%string "Expected closing tag </%{expected}>, but got </%{got}>."]))
      in
      fun loc ->
        Node.Element
-         { tag
-         ; attrs
-         ; inner
-         ; loc
-         ; open_loc
-         ; open_string_relative_location
-         ; close_string_relative_location
-         })
+         { tag; attrs; inner; loc; open_loc; open_string_relative_location; closing_tag })
 ;;
 
 let collapse_prefix_and_trailing_ws s =

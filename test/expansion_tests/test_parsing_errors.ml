@@ -3,12 +3,12 @@ open Test_utils
 
 let%expect_test "Misparse - due to mismatch in tags" =
   Expect_test_helpers_core.require_does_raise (fun () -> test {| <h1>cool</h2> |});
-  [%expect {| ("Expected closing tag </h1>, got </h2>") |}]
+  [%expect {| ("Expected closing tag </h1>, but got </h2>.") |}]
 ;;
 
 let%expect_test "Misparse - due to mismatch in tags" =
   Expect_test_helpers_core.require_does_raise (fun () -> test {| <h1>cool</> |});
-  [%expect {| ("Expected closing tag </h1>, got </>") |}]
+  [%expect {| ("Expected </h1>, but got an empty closing tag (</>).") |}]
 ;;
 
 let%expect_test "No closing tag." =

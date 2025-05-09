@@ -608,7 +608,7 @@ let%expect_test "Childless HTML Tags - need a closing slash" =
       <hr>
     </div>
   |});
-  [%expect {| ("Expected closing tag </hr>, got </div>") |}]
+  [%expect {| ("Expected closing tag </hr>, but got </div>.") |}]
 ;;
 
 let%expect_test "Sexp for debugging" =

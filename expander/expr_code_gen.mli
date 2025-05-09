@@ -8,6 +8,7 @@ module Type : sig
     | String
     | Attr of { interpolation_kind : Interpolation_kind.t }
     | Node of { interpolation_kind : Interpolation_kind.t }
+    | Argument
 
   val core_type : loc:location -> runtime_kind:Runtime_kind.t -> t -> core_type option
 end

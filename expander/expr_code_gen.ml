@@ -9,6 +9,7 @@ module Type = struct
     | String
     | Attr of { interpolation_kind : Interpolation_kind.t }
     | Node of { interpolation_kind : Interpolation_kind.t }
+    | Argument
 
   let core_type ~loc ~(runtime_kind : Runtime_kind.t) t : core_type option =
     match t, runtime_kind with
@@ -20,6 +21,7 @@ module Type = struct
       None
     | Node { interpolation_kind = _ }, Js_of_ocaml -> Some (Shared.node_t_type ~loc)
     | Node { interpolation_kind = _ }, Kernel -> None
+    | Argument, _ -> None
   ;;
 
   let call_f ~loc fn_name = C.pexp_ident ~loc { txt = Longident.parse fn_name; loc }
@@ -70,6 +72,16 @@ module Type = struct
     | Some module_ ->
       let loc = expression.pexp_loc in
       [%expr [%e call_f ~loc [%string "%{module_.txt}.to_string"]] [%e expression]]
+  ;;
+
+  let expand_argument ~module_ ~expression =
+    match module_ with
+    | None -> expression
+    | Some module_ ->
+      Location.raise_errorf
+        ~loc:module_.loc
+        "Error: unexpected #%s. This syntax is not allowed inside of arguments."
+        module_.txt
   ;;
 
   let stringable_node ~expression ~html_syntax_module ~module_ =
@@ -139,6 +151,7 @@ module Type = struct
       expand_attr_with_module ~interpolation_kind ~module_ ~html_syntax_module ~expression
     | Node { interpolation_kind } ->
       expand_node ~html_syntax_module ~module_ ~expression ~interpolation_kind
+    | Argument -> expand_argument ~module_ ~expression
   ;;
 end
 

@@ -64,6 +64,10 @@ familiar syntax:
 | `<div *{EXPR} > INNER </div>`      | `EXPR` must be `Attr.t list`                                                             |
 | `<%{TAGEXPR} ATTRS...> INNER </>`  | Where `TAGEXPR : ?attrs:Vdom.Attr.t list -> Vdom.Node.t list -> Vdom.Node.t`             |
 | `<%{TAGEXPR} ATTRS.../>`           | Where `TAGEXPR : ?attrs:Vdom.Attr.t list -> unit -> Vdom.Node.t`                         |
+| `<Foo.f> INNER </>`                | Sugar for `<%{Foo.f}> INNER </>`.                                                        |
+| `<Foo.f> INNER </Foo.f>`           | Alternate syntax for `<Foo.f> INNER </>`.                                                |
+| `<Foo.f ~foo:%{EXPR}></>`          | Passes ~foo:EXPR to Foo.f as an OCaml argument (also supports ?optional arguments).      |
+| `<Foo.f ~foo></>`                  | Shorthand for `<Foo.f ~foo:%{foo}></>`                                                   |
 | `{%html|<></>|}`                   | Will call `Vdom.Node.fragment`.                                                          |
 
 Attribute Syntax

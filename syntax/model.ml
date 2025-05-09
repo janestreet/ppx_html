@@ -75,6 +75,13 @@ module Loc = struct
   [@@deriving sexp_of]
 end
 
+module Escape_kind = struct
+  type t =
+    | Escaped
+    | Not_escaped
+  [@@deriving sexp_of]
+end
+
 module Expr = struct
   type t =
     { expr : Ocaml_expr.t
@@ -82,6 +89,7 @@ module Expr = struct
     ; to_t : string Loc.t option
     ; loc : Location.t
     ; string_relative_location : String_relative_location.t
+    ; escape_kind : Escape_kind.t
     }
   [@@deriving sexp_of]
 
@@ -95,7 +103,13 @@ module Expr = struct
       | Some to_t -> [%string "#%{to_t.txt}"]
     in
     let min_len = String.length code + String.length to_t in
-    let target_len = Location.length t.loc - String.length "%{}" in
+    let target_len =
+      Location.length t.loc
+      -
+      match t.escape_kind with
+      | Escaped -> String.length "%{}"
+      | Not_escaped -> 0
+    in
     (* Try really hard to preserve the expression length *)
     let code = String.pad_right ~char:' ' code ~len:(target_len - String.length to_t) in
     let len = String.length code + String.length to_t in
@@ -159,6 +173,13 @@ module Attr = struct
     ;;
   end
 
+  module Sigil = struct
+    type t =
+      | Tilde
+      | Question_mark
+    [@@deriving sexp_of]
+  end
+
   type t =
     | Attr of
         { name : string Loc.t
@@ -169,23 +190,57 @@ module Attr = struct
         { expr : Expr.t
         ; interpolation_kind : Interpolation_kind.t
         }
+    | Argument of
+        { name : string Loc.t
+        ; argument : Expr.t option
+        ; loc : Location.t
+        ; sigil : Sigil.t
+        }
   [@@deriving sexp_of]
 
   let loc = function
     | Attr { name = _; value = _; loc } -> loc
     | Expr expr -> Expr.loc expr.expr
+    | Argument { name = _; argument = _; sigil = _; loc } -> loc
   ;;
+end
+
+module Longident = struct
+  type t = Ppxlib.Longident.t =
+    | Lident of string
+    | Ldot of t * string
+    | Lapply of t * t
+  [@@deriving sexp_of]
+end
+
+module Closing_tag = struct
+  type t =
+    { loc : String_relative_location.t
+    ; is_fragment_like : bool (* if is_fragment_like then "</>" else "</Foo.f>" *)
+    }
+  [@@deriving sexp_of]
+end
+
+module Literal = struct
+  type t =
+    | Literal of string Loc.t
+    | Component of
+        { name : Longident.t Loc.t
+        ; string_relative_location : String_relative_location.t
+        ; code : string Loc.t
+        }
+  [@@deriving sexp_of]
 end
 
 module Tag = struct
   type t =
-    | Literal of string Loc.t
+    | Literal of Literal.t
     | Expr of Expr.t
     | Fragment of Location.t
   [@@deriving sexp_of]
 
   let loc = function
-    | Literal t -> t.loc
+    | Literal (Literal { loc; _ } | Component { name = { loc; _ }; _ }) -> loc
     | Expr t -> Expr.loc t
     | Fragment loc -> loc
   ;;
@@ -205,7 +260,7 @@ module Node = struct
         ; loc : Location.t
         ; open_loc : Location.t
         ; open_string_relative_location : String_relative_location.t
-        ; close_string_relative_location : String_relative_location.t option
+        ; closing_tag : Closing_tag.t option
         }
   [@@deriving sexp_of]
 
@@ -219,7 +274,7 @@ module Node = struct
         ; loc
         ; open_loc = _
         ; open_string_relative_location = _
-        ; close_string_relative_location = _
+        ; closing_tag = _
         } -> loc
   ;;
 end
@@ -239,6 +294,10 @@ include struct
     | List
     | String
 
+  and escape_kind = Escape_kind.t =
+    | Escaped
+    | Not_escaped
+
   and string_relative_location = String_relative_location.t =
     { start : int
     ; end_ : int
@@ -250,6 +309,7 @@ include struct
     ; to_t : string with_loc option
     ; loc : location
     ; string_relative_location : string_relative_location
+    ; escape_kind : escape_kind
     }
 
   and quote_elt = Quote.Elt.t =
@@ -262,6 +322,10 @@ include struct
     | Literal of quote
     | Expr of expr
 
+  and sigil = Attr.Sigil.t =
+    | Tilde
+    | Question_mark
+
   and attr = Attr.t =
     | Attr of
         { name : string with_loc
@@ -272,9 +336,33 @@ include struct
         { expr : expr
         ; interpolation_kind : interpolation_kind
         }
+    | Argument of
+        { name : string with_loc
+        ; argument : expr option
+        ; loc : location
+        ; sigil : sigil
+        }
+
+  and longident = Longident.t =
+    | Lident of string
+    | Ldot of longident * string
+    | Lapply of longident * longident
+
+  and closing_tag = Closing_tag.t =
+    { loc : string_relative_location
+    ; is_fragment_like : bool
+    }
+
+  and literal = Literal.t =
+    | Literal of string with_loc
+    | Component of
+        { name : longident with_loc
+        ; string_relative_location : string_relative_location
+        ; code : string with_loc
+        }
 
   and tag = Tag.t =
-    | Literal of string with_loc
+    | Literal of literal
     | Expr of expr
     | Fragment of location
 
@@ -291,7 +379,7 @@ include struct
         ; loc : location
         ; open_loc : location
         ; open_string_relative_location : string_relative_location
-        ; close_string_relative_location : string_relative_location option
+        ; closing_tag : closing_tag option
         }
   [@@deriving traverse_map]
 end
@@ -304,6 +392,7 @@ module Traverse = struct
       method option : 'a. ('a -> 'a) -> 'a option -> 'a option = fun f -> Option.map ~f
       method string : string -> string = Fn.id
       method int : int -> int = Fn.id
+      method bool : bool -> bool = Fn.id
       method ocaml_expr : ocaml_expr -> ocaml_expr = Fn.id
       method location : location -> location = Fn.id
     end
