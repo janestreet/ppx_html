@@ -25,6 +25,13 @@ module String_relative_location : sig
   [@@deriving sexp_of]
 end
 
+module Escape_kind : sig
+  type t =
+    | Escaped
+    | Not_escaped
+  [@@deriving sexp_of]
+end
+
 module Expr : sig
   type t =
     { expr : Ppxlib.Ast.expression
@@ -32,6 +39,7 @@ module Expr : sig
     ; to_t : string Ppxlib.Loc.t option
     ; loc : Ppxlib.Location.t
     ; string_relative_location : String_relative_location.t
+    ; escape_kind : Escape_kind.t
     }
   [@@deriving sexp_of]
 
@@ -65,6 +73,13 @@ module Attr : sig
     val loc : t -> Ppxlib.Location.t
   end
 
+  module Sigil : sig
+    type t =
+      | Tilde
+      | Question_mark
+    [@@deriving sexp_of]
+  end
+
   type t =
     | Attr of
         { name : string Ppxlib.Loc.t
@@ -75,14 +90,39 @@ module Attr : sig
         { expr : Expr.t
         ; interpolation_kind : Interpolation_kind.t
         }
+    | Argument of
+        { name : string Ppxlib.Loc.t
+        ; argument : Expr.t option
+        ; loc : Location.t
+        ; sigil : Sigil.t
+        }
   [@@deriving sexp_of]
 
   val loc : t -> Ppxlib.Location.t
 end
 
-module Tag : sig
+module Closing_tag : sig
+  type t =
+    { loc : String_relative_location.t
+    ; is_fragment_like : bool
+    }
+  [@@deriving sexp_of]
+end
+
+module Literal : sig
   type t =
     | Literal of string Ppxlib.Loc.t
+    | Component of
+        { name : Ppxlib.Longident.t Ppxlib.Loc.t
+        ; string_relative_location : String_relative_location.t
+        ; code : string Ppxlib.Loc.t
+        }
+  [@@deriving sexp_of]
+end
+
+module Tag : sig
+  type t =
+    | Literal of Literal.t
     | Expr of Expr.t
     | Fragment of Location.t
   [@@deriving sexp_of]
@@ -104,7 +144,7 @@ module Node : sig
         ; loc : Ppxlib.Location.t
         ; open_loc : Ppxlib.Location.t
         ; open_string_relative_location : String_relative_location.t
-        ; close_string_relative_location : String_relative_location.t option
+        ; closing_tag : Closing_tag.t option
         }
   [@@deriving sexp_of]
 
@@ -115,17 +155,23 @@ module Traverse : sig
   class map : object
     method attr : Attr.t -> Attr.t
     method attr_value : Attr.Value.t -> Attr.Value.t
+    method sigil : Attr.Sigil.t -> Attr.Sigil.t
     method expr : Expr.t -> Expr.t
     method list : ('a -> 'a) -> 'a list -> 'a list
     method location : Location.t -> Location.t
     method node : Node.t -> Node.t
     method ocaml_expr : Ocaml_expr.t -> Ocaml_expr.t
+    method escape_kind : Escape_kind.t -> Escape_kind.t
     method interpolation_kind : Interpolation_kind.t -> Interpolation_kind.t
+    method literal : Literal.t -> Literal.t
+    method longident : Ppxlib.Longident.t -> Ppxlib.Longident.t
     method option : ('a -> 'a) -> 'a option -> 'a option
     method quote : Quote.t -> Quote.t
     method quote_elt : Quote.Elt.t -> Quote.Elt.t
     method string : string -> string
     method int : int -> int
+    method bool : bool -> bool
+    method closing_tag : Closing_tag.t -> Closing_tag.t
 
     method string_relative_location :
       String_relative_location.t -> String_relative_location.t

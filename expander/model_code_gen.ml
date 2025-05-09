@@ -5,6 +5,7 @@ open Model
 module C = Ast_builder.Default
 
 let sanitize_ocaml_keyword s = if Ppxlib.Keyword.is_keyword s then s ^ "_" else s
+let is_capitalized s = (not (String.is_empty s)) && Char.is_uppercase s.[0]
 
 let rec node_expr
   :  html_syntax_module:longident loc option -> runtime_kind:Runtime_kind.t -> Node.t
@@ -28,16 +29,36 @@ let rec node_expr
       ; loc = full_loc
       ; open_loc = loc
       ; open_string_relative_location = _
-      ; close_string_relative_location = _
+      ; closing_tag = _
       } ->
     let tag =
       match tag with
-      | Literal name ->
+      | Literal (Literal name) ->
         Shared.node_fn
           ~loc:name.loc
           ~html_syntax_module
           ~primitive:false
           (sanitize_ocaml_keyword name.txt)
+      | Literal (Component { name; string_relative_location; code }) ->
+        let expr =
+          let expr =
+            let name =
+              match name.txt with
+              | (Lident x | Ldot (_, x)) when is_capitalized x ->
+                { name with txt = Ldot (name.txt, "component'") }
+              | _ -> name
+            in
+            Ppxlib.Ast_builder.Default.pexp_ident ~loc:name.loc name
+          in
+          { Expr.expr
+          ; string_relative_location
+          ; code
+          ; to_t = None
+          ; loc = code.loc
+          ; escape_kind = Not_escaped
+          }
+        in
+        Expr_code_gen.expr ~runtime_kind ~html_syntax_module expr
       | Expr e -> Expr_code_gen.expr ~runtime_kind ~html_syntax_module e
       | Fragment loc -> Shared.node_fn ~loc ~html_syntax_module ~primitive:true "fragment"
     in
@@ -63,22 +84,41 @@ let rec node_expr
         in
         [ Labelled "key", arg_expression ]
     in
-    let attrs =
-      List.map attrs ~f:(function
+    let attrs, arguments =
+      List.partition_map attrs ~f:(function
         | Attr.Expr { expr; interpolation_kind } ->
-          Expr_code_gen.expr
-            ~runtime_kind
-            ~html_syntax_module
-            ~type_:(Attr { interpolation_kind })
-            expr
-        | Attr.Attr { name; value = None; loc = _ } ->
-          Shared.attr_fn
-            ~loc:name.loc
-            ~html_syntax_module
-            ~primitive:false
-            (sanitize_ocaml_keyword name.txt)
-        | Attr.Attr { name; value = Some value; loc } ->
-          Attr_code_gen.code ~runtime_kind ~loc ~html_syntax_module name value)
+          let result =
+            Expr_code_gen.expr
+              ~runtime_kind
+              ~html_syntax_module
+              ~type_:(Attr { interpolation_kind })
+              expr
+          in
+          Either.First result
+        | Argument { name; argument; sigil; loc = _ } ->
+          let result =
+            Attr_code_gen.argument
+              ~name
+              ~argument
+              ~sigil
+              ~runtime_kind
+              ~html_syntax_module
+          in
+          Second result
+        | Attr { name; value = None; loc = _ } ->
+          let result =
+            Shared.attr_fn
+              ~loc:name.loc
+              ~html_syntax_module
+              ~primitive:false
+              (sanitize_ocaml_keyword name.txt)
+          in
+          First result
+        | Attr { name; value = Some value; loc } ->
+          let result =
+            Attr_code_gen.code ~runtime_kind ~loc ~html_syntax_module name value
+          in
+          First result)
     in
     let args =
       let attrs =
@@ -117,7 +157,7 @@ let rec node_expr
               C.elist ~loc arg_expressions )
         ]
       in
-      List.concat [ key_args; attrs; nodes ]
+      List.concat [ key_args; attrs; nodes; arguments ]
     in
     C.pexp_apply ~loc:full_loc tag args
 ;;

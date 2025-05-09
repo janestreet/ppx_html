@@ -92,7 +92,7 @@ let%expect_test "Bonsai's hello world HTML" =
     </body>
 </html>
   |});
-  [%expect {| ("Expected closing tag </meta>, got </head>") |}]
+  [%expect {| ("Expected closing tag </meta>, but got </head>.") |}]
 ;;
 
 let%expect_test "Highcharts example" =
