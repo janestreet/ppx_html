@@ -2,26 +2,23 @@ open! Core
 open Ppxlib
 open Ppx_html_syntax
 
-let features_that_are_waiting_an_apply_style_roll_allowed = ref false
+let experimental_component_shorthand_syntax_allowed = ref false
 
-let set_features_that_are_waiting_an_apply_style_roll_allowed () =
-  features_that_are_waiting_an_apply_style_roll_allowed := true
+let set_experimental_component_shorthand_syntax_allowed () =
+  experimental_component_shorthand_syntax_allowed := true
 ;;
 
-let register_feature_flag () =
+let register_experimental_component_syntax_flag () =
   (* NOTE: This is dead code should we want to do a similar feature-flag release lock in
      the future. *)
   Driver.add_arg
-    "-features-that-are-waiting-an-apply-style-roll-allowed"
-    (Unit set_features_that_are_waiting_an_apply_style_roll_allowed)
+    "-experimental-component-shorthand-syntax-allowed"
+    (Unit set_experimental_component_shorthand_syntax_allowed)
     ~doc:
-      {|<unit> some features might be styled weirdly until they are picked up by apply
-style e.g. <Component.f></>. You can use these features before they are styled properly
-by apply style by sending this flag. It is not totally recommended as apply style
-might do wrong things.|}
+      {|Turns on the utilization of the experimental ppx_html syntax for shorter components. (i.e. <Foo></> will call Foo.component')|}
 ;;
 
-let () = register_feature_flag ()
+let () = register_experimental_component_syntax_flag ()
 
 let loc_ghoster =
   object
@@ -30,6 +27,8 @@ let loc_ghoster =
   end
 ;;
 
+let is_capitalized s = (not (String.is_empty s)) && Char.is_uppercase s.[0]
+
 let experimental_feature_checker ~loc:_ =
   object
     inherit Model.Traverse.map as super
@@ -37,13 +36,16 @@ let experimental_feature_checker ~loc:_ =
     method! literal literal =
       match literal with
       | Literal _ as literal -> super#literal literal
-      | Component { name = { loc; _ }; string_relative_location = _; code = _ } ->
-        Location.raise_errorf
-          ~loc
-          "Error! This syntax is new and apply style does not understand it yet so it \
-           may do wrong things! You can pass \
-           '-features-that-are-waiting-an-apply-style-roll-allowed' to silence this \
-           warning. "
+      | Component { name = { loc; txt = name }; string_relative_location = _; code = _ }
+        ->
+        (match name with
+         | (Lident x | Ldot (_, x)) when is_capitalized x ->
+           Location.raise_errorf
+             ~loc
+             "Error this syntax is currently experimental not enabled by default in \
+              ppx_html. If you would like to use a syntax like this please reach out! \
+              Thanks."
+         | _ -> super#literal literal)
   end
 ;;
 
@@ -62,8 +64,7 @@ let extension ~name ~runtime_kind ~experimental_features_allowed =
       let loc = string_loc in
       let model = Model_parser.of_string ~loc string in
       let experimental_features_allowed =
-        experimental_features_allowed
-        || !features_that_are_waiting_an_apply_style_roll_allowed
+        experimental_features_allowed || !experimental_component_shorthand_syntax_allowed
       in
       if not experimental_features_allowed
       then
