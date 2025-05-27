@@ -67,7 +67,7 @@ familiar syntax:
 | `<Foo.f> INNER </>`                | Sugar for `<%{Foo.f}> INNER </>`.                                                        |
 | `<Foo.f> INNER </Foo.f>`           | Alternate syntax for `<Foo.f> INNER </>`.                                                |
 | `<Foo.f ~foo:%{EXPR}></>`          | Passes ~foo:EXPR to Foo.f as an OCaml argument (also supports ?optional arguments).      |
-| `<Foo.f ~foo></>`                  | Shorthand for `<Foo.f ~foo:%{foo}></>`                                                   |
+| `<Foo.f ~foo></>`                  | Shorthand for `<Foo.f ~foo:%{foo}></>` (also supports ?optional arguments).              |
 | `{%html|<></>|}`                   | Will call `Vdom.Node.fragment`.                                                          |
 
 Attribute Syntax
