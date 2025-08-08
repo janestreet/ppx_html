@@ -15,7 +15,7 @@ let%expect_test "Module expansions - attribute value" =
              Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,2
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[(((Html_syntax.Attr.width)[@merlin.focus ]) (Int.to_string 1) :
     -|         Virtual_dom.Vdom.Attr.t)] []
@@ -37,7 +37,7 @@ let%expect_test "Module expansions - node" =
       [(Html_syntax.Node.Primitives.text (Foo.to_string x) : Virtual_dom.Vdom.Node.t)]
 
     PPX_HTML_KERNEL (diff):
-    -1,2 +1,1
+    === DIFF HUNK ===
     -|Html_syntax.Node.div
     -|  [(Html_syntax.Node.Primitives.text (Foo.to_string x) : Virtual_dom.Vdom.Node.t)]
     +|Html_syntax.Node.div [Html_syntax.Node.Primitives.text (Foo.to_string x)]
@@ -56,7 +56,7 @@ let%expect_test "Module expansions - attribute" =
     Html_syntax.Node.div ~attrs:[(Foo.to_attr attr : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,1 +1,1
+    === DIFF HUNK ===
     -|Html_syntax.Node.div ~attrs:[(Foo.to_attr attr : Virtual_dom.Vdom.Attr.t)] []
     +|Html_syntax.Node.div ~attrs:[Foo.to_attr attr] []
     |}]

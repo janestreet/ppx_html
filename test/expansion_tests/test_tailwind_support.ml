@@ -12,7 +12,7 @@ let%expect_test "basic expansion" =
       ~attrs:[([%tailwind "bg-white"] : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,2 +1,2
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[([%tailwind "bg-white"] : Virtual_dom.Vdom.Attr.t)] []
     +|  ~attrs:[((Html_syntax.Attr.tailwind)[@merlin.focus ]) "bg-white"] []
@@ -31,7 +31,7 @@ let%expect_test "multiple classes" =
       []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,3
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[([%tailwind "bg-white bg-black foo bar baz"] : Virtual_dom.Vdom.Attr.t)]
     -|  []
@@ -52,7 +52,7 @@ let%expect_test "multiple tailwind attrs" =
              ([%tailwind "bg-white foo bar baz"] : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,4
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[([%tailwind "bg-white"] : Virtual_dom.Vdom.Attr.t);
     -|         ([%tailwind "bg-white foo bar baz"] : Virtual_dom.Vdom.Attr.t)] []
@@ -80,7 +80,7 @@ let%expect_test "No quotes" =
       ~attrs:[([%tailwind "bg-white"] : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,2 +1,2
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[([%tailwind "bg-white"] : Virtual_dom.Vdom.Attr.t)] []
     +|  ~attrs:[((Html_syntax.Attr.tailwind)[@merlin.focus ]) "bg-white"] []

@@ -14,7 +14,7 @@ let%expect_test "Testing with non-default syntax" =
       [(EXPR : Virtual_dom.Vdom.Node.t)]
 
     PPX_HTML_KERNEL (diff):
-    -1,4 +1,3
+    === DIFF HUNK ===
       Capybara.Html_syntax.Html_syntax.Node.munch
     -|  ~attrs:[(((Capybara.Html_syntax.Html_syntax.Attr.carrot)[@merlin.focus ])
     +|  ~attrs:[((Capybara.Html_syntax.Html_syntax.Attr.carrot)[@merlin.focus ])

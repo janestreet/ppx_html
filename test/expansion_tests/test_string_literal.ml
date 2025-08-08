@@ -12,7 +12,7 @@ let%expect_test "Node interpolation with a string literal" =
       [(Html_syntax.Node.Primitives.text ((" ")[@merlin.focus ]) : Virtual_dom.Vdom.Node.t)]
 
     PPX_HTML_KERNEL (diff):
-    -1,2 +1,2
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  [(Html_syntax.Node.Primitives.text ((" ")[@merlin.focus ]) : Virtual_dom.Vdom.Node.t)]
     +|  [Html_syntax.Node.Primitives.text ((" ")[@merlin.focus ])]
@@ -31,7 +31,7 @@ let%expect_test "Node interpolation with a string literal" =
       Html_syntax.Node.Primitives.text " "]
 
     PPX_HTML_KERNEL (diff):
-    -1,6 +1,5
+    === DIFF HUNK ===
       Html_syntax.Node.div
         [Html_syntax.Node.Primitives.text " I am a ";
     -|  (Html_syntax.Node.Primitives.text ((" ")[@merlin.focus ]) : Virtual_dom.Vdom.Node.t);
@@ -60,7 +60,7 @@ let%expect_test "The string literal interpolation only happens in a node context
       Html_syntax.Node.Primitives.text " "]
 
     PPX_HTML_KERNEL (diff):
-    -1,6 +1,5
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[("attr" : Virtual_dom.Vdom.Attr.t);
     -|         (((Html_syntax.Attr.src)[@merlin.focus ]) "attr value" : Virtual_dom.Vdom.Attr.t)]
@@ -86,7 +86,7 @@ let%expect_test "The interpolation does not happen if a modul is provided" =
       Html_syntax.Node.Primitives.text " "]
 
     PPX_HTML_KERNEL (diff):
-    -1,4 +1,4
+    === DIFF HUNK ===
       Html_syntax.Node.div
         [Html_syntax.Node.Primitives.text " ";
     -|  (Html_syntax.Node.Primitives.text (Modul.to_string "constant") : Virtual_dom.Vdom.Node.t);

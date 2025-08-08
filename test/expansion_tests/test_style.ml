@@ -16,7 +16,7 @@ let%expect_test "Style" =
       [Html_syntax.Node.Primitives.text " "]
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,4
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[([%css "background-color: tomato;"] : Virtual_dom.Vdom.Attr.t)]
     +|  ~attrs:[((Html_syntax.Attr.style)[@merlin.focus ])
@@ -40,7 +40,7 @@ let%expect_test "Many styles" =
              Virtual_dom.Vdom.Attr.t)] [Html_syntax.Node.Primitives.text " "]
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,4
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[([%css "background-color: tomato; background-color: red;"] :
     -|         Virtual_dom.Vdom.Attr.t)] [Html_syntax.Node.Primitives.text " "]
@@ -66,7 +66,7 @@ let%expect_test "Interpolation within styles" =
              Virtual_dom.Vdom.Attr.t)] [Html_syntax.Node.Primitives.text " "]
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,5
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[([%css "background-color: tomato; background-color: %{(color)};"] :
     -|         Virtual_dom.Vdom.Attr.t)] [Html_syntax.Node.Primitives.text " "]
@@ -93,7 +93,7 @@ let%expect_test "Whole-sale interpolation does not call ppx_css" =
       [Html_syntax.Node.Primitives.text " "]
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,3
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[(Html_syntax.Attr.style Css_gen.foo : Virtual_dom.Vdom.Attr.t)]
     +|  ~attrs:[((Html_syntax.Attr.style)[@merlin.focus ]) Css_gen.foo]
@@ -116,7 +116,7 @@ let%expect_test "PPX CSS's interpolation syntax" =
       [Html_syntax.Node.Primitives.text " "]
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,4
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[([%css "background-color: %{(color)#Color};"] : Virtual_dom.Vdom.Attr.t)]
     +|  ~attrs:[((Html_syntax.Attr.style)[@merlin.focus ])

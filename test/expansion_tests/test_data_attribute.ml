@@ -13,7 +13,7 @@ let%expect_test "data-test attribute" =
                  "foo" : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,3
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[(((Html_syntax.Attr.Primitives.create "data-test")[@merlin.focus ])
     +|  ~attrs:[((Html_syntax.Attr.Primitives.create "data-test")[@merlin.focus ])
@@ -34,7 +34,7 @@ let%expect_test "data-test attribute with interpolation" =
                  foo : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,3
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[(((Html_syntax.Attr.Primitives.create "data-test")[@merlin.focus ])
     -|             foo : Virtual_dom.Vdom.Attr.t)] []
@@ -52,7 +52,7 @@ let%expect_test "data-test attribute with interpolation" =
                  ([%string "hi__%{(foo)}"]) : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,3
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[(((Html_syntax.Attr.Primitives.create "data-test")[@merlin.focus ])
     +|  ~attrs:[((Html_syntax.Attr.Primitives.create "data-test")[@merlin.focus ])
@@ -73,7 +73,7 @@ let%expect_test "other kinds of data-* attributes" =
                  [@merlin.focus ]) "foo" : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,3
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[(((Html_syntax.Attr.Primitives.create "data-columns")
     +|  ~attrs:[((Html_syntax.Attr.Primitives.create "data-columns")
@@ -91,7 +91,7 @@ let%expect_test "other kinds of data-* attributes" =
                  "foo" : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,3
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[(((Html_syntax.Attr.Primitives.create "data-rows")[@merlin.focus ])
     +|  ~attrs:[((Html_syntax.Attr.Primitives.create "data-rows")[@merlin.focus ])

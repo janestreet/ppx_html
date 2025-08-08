@@ -96,7 +96,7 @@ let%expect_test "Attributes" =
       []
 
     PPX_HTML_KERNEL (diff):
-    -1,7 +1,5
+    === DIFF HUNK ===
       Html_syntax.Node.h2
     -|  ~attrs:[(((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-header" :
     -|         Virtual_dom.Vdom.Attr.t);
@@ -128,7 +128,7 @@ let%expect_test "Attributes and element tag interpolation" =
              Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,4 +1,3
+    === DIFF HUNK ===
       ELEMENT_EXPR
     -|  ~attrs:[(ATTRIBUTE_EXPR : Virtual_dom.Vdom.Attr.t);
     +|  ~attrs:[ATTRIBUTE_EXPR;
@@ -189,7 +189,7 @@ let%expect_test "Interpolation with no parsing context" =
     (foo : Virtual_dom.Vdom.Node.t)
 
     PPX_HTML_KERNEL (diff):
-    -1,1 +1,1
+    === DIFF HUNK ===
     -|(foo : Virtual_dom.Vdom.Node.t)
     +|foo
     |}];
@@ -220,7 +220,7 @@ let%expect_test "Many classes used at once" =
       []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,2
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[(Html_syntax.Attr.classes ["foo"; "bar"; "baz"] : Virtual_dom.Vdom.Attr.t)]
     -|  []
@@ -250,7 +250,7 @@ let%expect_test "classes with substitutions" =
              Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,4 +1,3
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[(Html_syntax.Attr.classes
     -|             [[%string "foo-%{(\"bar\")}-baz"]; "fizz"; ("other" : string)] :
@@ -296,7 +296,7 @@ let%expect_test "Complex-ish test case" =
       (help : Virtual_dom.Vdom.Node.t)]
 
     PPX_HTML_KERNEL (diff):
-    -1,16 +1,13
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[(Html_syntax.Attr.classes ["menu-add-card"] : Virtual_dom.Vdom.Attr.t);
     -|         (((Html_syntax.Attr.on_click)[@merlin.focus ])
@@ -346,7 +346,7 @@ let%expect_test "Attrs that are OCaml keywords are special cased" =
              (Html_syntax.Attr.open_ : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,5 +1,5
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[(Html_syntax.Attr.classes ["class"] : Virtual_dom.Vdom.Attr.t);
     +|  ~attrs:[((Html_syntax.Attr.class_)[@merlin.focus ]) "class";
@@ -388,7 +388,7 @@ let%expect_test "Disabled attribute" =
       ~attrs:[(Html_syntax.Attr.disabled : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,2 +1,1
+    === DIFF HUNK ===
     -|Html_syntax.Node.div
     -|  ~attrs:[(Html_syntax.Attr.disabled : Virtual_dom.Vdom.Attr.t)] []
     +|Html_syntax.Node.div ~attrs:[Html_syntax.Attr.disabled] []
@@ -410,7 +410,7 @@ let%expect_test "className is not special handled" =
       []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,2
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[(((Html_syntax.Attr.className)[@merlin.focus ]) "foo" : Virtual_dom.Vdom.Attr.t)]
     -|  []
@@ -435,7 +435,7 @@ let%expect_test "Duplicate attribute names." =
       []
 
     PPX_HTML_KERNEL (diff):
-    -1,4 +1,3
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[(((Html_syntax.Attr.a)[@merlin.focus ]) "1" : Virtual_dom.Vdom.Attr.t);
     -|         (((Html_syntax.Attr.a)[@merlin.focus ]) "2" : Virtual_dom.Vdom.Attr.t)]
@@ -457,7 +457,7 @@ let%expect_test "Duplicate attribute names." =
              (Html_syntax.Attr.classes ["bar"] : Virtual_dom.Vdom.Attr.t)] []
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,3
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[(Html_syntax.Attr.classes ["foo"] : Virtual_dom.Vdom.Attr.t);
     -|         (Html_syntax.Attr.classes ["bar"] : Virtual_dom.Vdom.Attr.t)] []
@@ -482,7 +482,7 @@ let%expect_test "Escaping of attribute strings" =
       []
 
     PPX_HTML_KERNEL (diff):
-    -1,4 +1,3
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[(((Html_syntax.Attr.no_quotes)[@merlin.focus ]) "1" : Virtual_dom.Vdom.Attr.t);
     +|  ~attrs:[((Html_syntax.Attr.no_quotes)[@merlin.focus ]) "1";
@@ -506,7 +506,7 @@ let%expect_test "Escaping of attribute strings" =
       []
 
     PPX_HTML_KERNEL (diff):
-    -1,4 +1,3
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[(((Html_syntax.Attr.two)[@merlin.focus ]) "\"\"" : Virtual_dom.Vdom.Attr.t);
     -|         (((Html_syntax.Attr.one)[@merlin.focus ]) "\"" : Virtual_dom.Vdom.Attr.t)]
@@ -535,7 +535,7 @@ let%expect_test "ppx_html inside of ppx_html" =
       ([%html {x|<p>hello</p>|x}] : Virtual_dom.Vdom.Node.t)]
 
     PPX_HTML_KERNEL (diff):
-    -1,5 +1,4
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[(((Html_syntax.Attr.no_quotes)[@merlin.focus ]) "1" : Virtual_dom.Vdom.Attr.t);
     -|         (((Html_syntax.Attr.with_quotes)[@merlin.focus ]) "2" : Virtual_dom.Vdom.Attr.t)]
@@ -577,7 +577,7 @@ let%expect_test "Childless HTML Tags" =
       Html_syntax.Node.hr ()]
 
     PPX_HTML_KERNEL (diff):
-    -1,11 +1,9
+    === DIFF HUNK ===
       Html_syntax.Node.div
         [Html_syntax.Node.Primitives.text " Hello ";
         Html_syntax.Node.br ();
@@ -701,7 +701,7 @@ let%expect_test "Comments" =
       Html_syntax.Node.div []]
 
     PPX_HTML_KERNEL (diff):
-    -1,4 +1,2
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  [Html_syntax.Node.div [];
     -|  (Vdom.Node.none : Virtual_dom.Vdom.Node.t);

@@ -11,7 +11,7 @@ let%expect_test "We do not incorrectly count escaped '#''s as module identifiers
     Html_syntax.Node.div [(text "#hi!" : Virtual_dom.Vdom.Node.t)]
 
     PPX_HTML_KERNEL (diff):
-    -1,1 +1,1
+    === DIFF HUNK ===
     -|Html_syntax.Node.div [(text "#hi!" : Virtual_dom.Vdom.Node.t)]
     +|Html_syntax.Node.div [text "#hi!"]
     |}]
@@ -29,7 +29,7 @@ let%expect_test "Two kinds of '#'s" =
       Virtual_dom.Vdom.Node.t)]
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,2
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  [(Html_syntax.Node.Primitives.text (Module.to_string (text "#hi!")) :
     -|  Virtual_dom.Vdom.Node.t)]
@@ -49,7 +49,7 @@ let%expect_test "Normal case" =
       Virtual_dom.Vdom.Node.t)]
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,2
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  [(Html_syntax.Node.Primitives.text (Module.to_string (text "#hi!")) :
     -|  Virtual_dom.Vdom.Node.t)]
@@ -89,7 +89,7 @@ module%test [@name "Other contexts"] _ = struct
       Html_syntax.Node.div ~attrs:[("#hi" : Virtual_dom.Vdom.Attr.t)] []
 
       PPX_HTML_KERNEL (diff):
-      -1,1 +1,1
+      === DIFF HUNK ===
       -|Html_syntax.Node.div ~attrs:[("#hi" : Virtual_dom.Vdom.Attr.t)] []
       +|Html_syntax.Node.div ~attrs:["#hi"] []
       |}];
@@ -103,7 +103,7 @@ module%test [@name "Other contexts"] _ = struct
         []
 
       PPX_HTML_KERNEL (diff):
-      -1,2 +1,1
+      === DIFF HUNK ===
       -|Html_syntax.Node.div ~attrs:[(Foo.to_attr "#hi" : Virtual_dom.Vdom.Attr.t)]
       -|  []
       +|Html_syntax.Node.div ~attrs:[Foo.to_attr "#hi"] []
@@ -122,7 +122,7 @@ module%test [@name "Other contexts"] _ = struct
         []
 
       PPX_HTML_KERNEL (diff):
-      -1,3 +1,2
+      === DIFF HUNK ===
       -|Html_syntax.Node.div
       -|  ~attrs:[(((Html_syntax.Attr.foo)[@merlin.focus ]) "#hi" : Virtual_dom.Vdom.Attr.t)]
       +|Html_syntax.Node.div ~attrs:[((Html_syntax.Attr.foo)[@merlin.focus ]) "#hi"]
@@ -139,7 +139,7 @@ module%test [@name "Other contexts"] _ = struct
                Virtual_dom.Vdom.Attr.t)] []
 
       PPX_HTML_KERNEL (diff):
-      -1,3 +1,2
+      === DIFF HUNK ===
         Html_syntax.Node.div
       -|  ~attrs:[(((Html_syntax.Attr.foo)[@merlin.focus ]) (Foo.to_string "#hi") :
       -|         Virtual_dom.Vdom.Attr.t)] []
@@ -171,7 +171,7 @@ module%test [@name "Other contexts"] _ = struct
         Virtual_dom.Vdom.Node.t)]
 
       PPX_HTML_KERNEL (diff):
-      -1,15 +1,12
+      === DIFF HUNK ===
         Html_syntax.Node.div
       -|  ~attrs:[((match "#hi" with
       +|  ~attrs:[(match "#hi" with
@@ -217,7 +217,7 @@ module%test [@name "Other contexts"] _ = struct
         Virtual_dom.Vdom.Node.t)]
 
       PPX_HTML_KERNEL (diff):
-      -1,10 +1,9
+      === DIFF HUNK ===
         Html_syntax.Node.div
       -|  ~attrs:[(Html_syntax.Attr.Primitives.many "#hi" : Virtual_dom.Vdom.Attr.t);
       -|         (Html_syntax.Attr.Primitives.many

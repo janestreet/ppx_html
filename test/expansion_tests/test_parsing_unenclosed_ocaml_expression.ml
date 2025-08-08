@@ -11,7 +11,7 @@ let%expect_test "Parsing unparenthesized ocaml expression" =
     Html_syntax.Node.div [((x : Vdom.Node.t) : Virtual_dom.Vdom.Node.t)]
 
     PPX_HTML_KERNEL (diff):
-    -1,1 +1,1
+    === DIFF HUNK ===
     -|Html_syntax.Node.div [((x : Vdom.Node.t) : Virtual_dom.Vdom.Node.t)]
     +|Html_syntax.Node.div [(x : Vdom.Node.t)]
     |}]
@@ -27,7 +27,7 @@ let%expect_test "Parsing parenthesized ocaml expression" =
     Html_syntax.Node.div [((x : Vdom.Node.t) : Virtual_dom.Vdom.Node.t)]
 
     PPX_HTML_KERNEL (diff):
-    -1,1 +1,1
+    === DIFF HUNK ===
     -|Html_syntax.Node.div [((x : Vdom.Node.t) : Virtual_dom.Vdom.Node.t)]
     +|Html_syntax.Node.div [(x : Vdom.Node.t)]
     |}]
