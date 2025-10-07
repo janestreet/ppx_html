@@ -14,7 +14,7 @@ module%test [@name "?{} - really basic sanity tests"] _ = struct
         Virtual_dom.Vdom.Node.t)]
 
       PPX_HTML_KERNEL (diff):
-      -1,3 +1,2
+      === DIFF HUNK ===
         Html_syntax.Node.div
       -|  [((match EXPR with | None -> Html_syntax.Node.Primitives.none | Some x -> x) :
       -|  Virtual_dom.Vdom.Node.t)]
@@ -35,7 +35,7 @@ module%test [@name "?{} - really basic sanity tests"] _ = struct
                   | Some x -> x) : Virtual_dom.Vdom.Attr.t)] []
 
       PPX_HTML_KERNEL (diff):
-      -1,4 +1,4
+      === DIFF HUNK ===
         Html_syntax.Node.div
       -|  ~attrs:[((match EXPR with
       +|  ~attrs:[(match EXPR with
@@ -59,7 +59,7 @@ module%test [@name "?{} - really basic sanity tests"] _ = struct
         Virtual_dom.Vdom.Node.t)]
 
       PPX_HTML_KERNEL (diff):
-      -1,5 +1,4
+      === DIFF HUNK ===
         Html_syntax.Node.div
       -|  [((match EXPR with
       +|  [(match EXPR with
@@ -83,7 +83,7 @@ module%test [@name "?{} - really basic sanity tests"] _ = struct
                   | Some x -> Foo.to_attr x) : Virtual_dom.Vdom.Attr.t)] []
 
       PPX_HTML_KERNEL (diff):
-      -1,4 +1,4
+      === DIFF HUNK ===
         Html_syntax.Node.div
       -|  ~attrs:[((match EXPR with
       +|  ~attrs:[(match EXPR with
@@ -106,7 +106,7 @@ module%test [@name "*{} - really basic sanity tests"] _ = struct
         [(Html_syntax.Node.Primitives.fragment EXPR : Virtual_dom.Vdom.Node.t)]
 
       PPX_HTML_KERNEL (diff):
-      -1,2 +1,1
+      === DIFF HUNK ===
       -|Html_syntax.Node.div
       -|  [(Html_syntax.Node.Primitives.fragment EXPR : Virtual_dom.Vdom.Node.t)]
       +|Html_syntax.Node.div [Html_syntax.Node.Primitives.fragment EXPR]
@@ -125,7 +125,7 @@ module%test [@name "*{} - really basic sanity tests"] _ = struct
         []
 
       PPX_HTML_KERNEL (diff):
-      -1,3 +1,1
+      === DIFF HUNK ===
       -|Html_syntax.Node.div
       -|  ~attrs:[(Html_syntax.Attr.Primitives.many EXPR : Virtual_dom.Vdom.Attr.t)]
       -|  []
@@ -147,7 +147,7 @@ module%test [@name "*{} - really basic sanity tests"] _ = struct
         Virtual_dom.Vdom.Node.t)]
 
       PPX_HTML_KERNEL (diff):
-      -1,5 +1,4
+      === DIFF HUNK ===
         Html_syntax.Node.div
       -|  [(Html_syntax.Node.Primitives.fragment
       +|  [Html_syntax.Node.Primitives.fragment
@@ -171,7 +171,7 @@ module%test [@name "*{} - really basic sanity tests"] _ = struct
         []
 
       PPX_HTML_KERNEL (diff):
-      -1,4 +1,3
+      === DIFF HUNK ===
         Html_syntax.Node.div
       -|  ~attrs:[(Html_syntax.Attr.Primitives.many
       +|  ~attrs:[Html_syntax.Attr.Primitives.many
@@ -195,7 +195,7 @@ let%expect_test "Asterisk with many other elements" =
       Html_syntax.Node.Primitives.text " b"]
 
     PPX_HTML_KERNEL (diff):
-    -1,4 +1,4
+    === DIFF HUNK ===
       Html_syntax.Node.div
         [Html_syntax.Node.Primitives.text "a ";
     -|  (Html_syntax.Node.Primitives.fragment EXPR : Virtual_dom.Vdom.Node.t);
@@ -213,7 +213,7 @@ let%expect_test "Asterisk with many other elements" =
       Html_syntax.Node.Primitives.text " b"]
 
     PPX_HTML_KERNEL (diff):
-    -1,3 +1,3
+    === DIFF HUNK ===
       Html_syntax.Node.div
     -|  [(Html_syntax.Node.Primitives.fragment EXPR : Virtual_dom.Vdom.Node.t);
     +|  [Html_syntax.Node.Primitives.fragment EXPR;
@@ -237,7 +237,7 @@ let%expect_test "Multiple asterisks" =
       (Html_syntax.Node.Primitives.fragment EXPR3 : Virtual_dom.Vdom.Node.t)]
 
     PPX_HTML_KERNEL (diff):
-    -1,7 +1,7
+    === DIFF HUNK ===
       Html_syntax.Node.div
         [Html_syntax.Node.Primitives.text "a ";
     -|  (Html_syntax.Node.Primitives.fragment EXPR1 : Virtual_dom.Vdom.Node.t);
@@ -279,7 +279,7 @@ let%expect_test "Mixed syntaxes" =
       Virtual_dom.Vdom.Node.t)]
 
     PPX_HTML_KERNEL (diff):
-    -1,18 +1,16
+    === DIFF HUNK ===
       Html_syntax.Node.div
         [Html_syntax.Node.Primitives.text "a ";
     -|  (Html_syntax.Node.Primitives.fragment EXPR1 : Virtual_dom.Vdom.Node.t);
@@ -405,7 +405,7 @@ module%test [@name "Using interpolation characters"] _ = struct
         Virtual_dom.Vdom.Node.t)]
 
       PPX_HTML_KERNEL (diff):
-      -1,4 +1,3
+      === DIFF HUNK ===
         Html_syntax.Node.div
           [Html_syntax.Node.Primitives.text "\\";
       -|  ((match hi with | None -> Html_syntax.Node.Primitives.none | Some x -> x) :
@@ -423,7 +423,7 @@ module%test [@name "Using interpolation characters"] _ = struct
         (Html_syntax.Node.Primitives.fragment hi : Virtual_dom.Vdom.Node.t)]
 
       PPX_HTML_KERNEL (diff):
-      -1,3 +1,3
+      === DIFF HUNK ===
         Html_syntax.Node.div
           [Html_syntax.Node.Primitives.text "\\";
       -|  (Html_syntax.Node.Primitives.fragment hi : Virtual_dom.Vdom.Node.t)]
@@ -444,7 +444,7 @@ module%test [@name "#{} - really basic sanity tests"] _ = struct
         [(Html_syntax.Node.Primitives.text ((EXPR)[@merlin.focus ]) : Virtual_dom.Vdom.Node.t)]
 
       PPX_HTML_KERNEL (diff):
-      -1,2 +1,2
+      === DIFF HUNK ===
         Html_syntax.Node.div
       -|  [(Html_syntax.Node.Primitives.text ((EXPR)[@merlin.focus ]) : Virtual_dom.Vdom.Node.t)]
       +|  [Html_syntax.Node.Primitives.text ((EXPR)[@merlin.focus ])]
@@ -461,7 +461,7 @@ module%test [@name "#{} - really basic sanity tests"] _ = struct
         Html_syntax.Node.Primitives.text "!"]
 
       PPX_HTML_KERNEL (diff):
-      -1,4 +1,4
+      === DIFF HUNK ===
         Html_syntax.Node.div
           [Html_syntax.Node.Primitives.text "Hello ";
       -|  (Html_syntax.Node.Primitives.text ((EXPR)[@merlin.focus ]) : Virtual_dom.Vdom.Node.t);

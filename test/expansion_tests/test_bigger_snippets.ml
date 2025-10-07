@@ -56,7 +56,7 @@ let%expect_test "Bonsai's hello world HTML" =
            []]]
 
     PPX_HTML_KERNEL (diff):
-    -1,15 +1,12
+    === DIFF HUNK ===
       Html_syntax.Node.html
         [Html_syntax.Node.head
            [Html_syntax.Node.meta
@@ -176,7 +176,7 @@ let%expect_test "Highcharts example" =
         Html_syntax.Node.br ()]]
 
     PPX_HTML_KERNEL (diff):
-    -1,53 +1,44
+    === DIFF HUNK ===
     -|Html_syntax.Node.html
     -|  ~attrs:[(((Html_syntax.Attr.lang)[@merlin.focus ]) "en" : Virtual_dom.Vdom.Attr.t)]
     +|Html_syntax.Node.html ~attrs:[((Html_syntax.Attr.lang)[@merlin.focus ]) "en"]

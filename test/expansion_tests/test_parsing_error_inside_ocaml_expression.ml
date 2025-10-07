@@ -44,7 +44,7 @@ let%expect_test "Syntax error inside of OCaml expression" =
       [(Vdom.Node.text ("hello" ^ "world") : Virtual_dom.Vdom.Node.t)]
 
     PPX_HTML_KERNEL (diff):
-    -1,2 +1,1
+    === DIFF HUNK ===
     -|Html_syntax.Node.div
     -|  [(Vdom.Node.text ("hello" ^ "world") : Virtual_dom.Vdom.Node.t)]
     +|Html_syntax.Node.div [Vdom.Node.text ("hello" ^ "world")]

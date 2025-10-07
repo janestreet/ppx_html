@@ -119,7 +119,7 @@ let%expect_test "OCaml arguments" =
              Virtual_dom.Vdom.Attr.t)] [] ~foo:EXPR ~bar:EXPR2 ~bam
 
     PPX_HTML_KERNEL (diff):
-    -1,4 +1,4
+    === DIFF HUNK ===
       Foo.f
     -|  ~attrs:[(((Html_syntax.Attr.attr1)[@merlin.focus ]) EXPR : Virtual_dom.Vdom.Attr.t);
     +|  ~attrs:[((Html_syntax.Attr.attr1)[@merlin.focus ]) EXPR;
@@ -147,7 +147,7 @@ let%expect_test "OCaml arguments" =
              Virtual_dom.Vdom.Attr.t)] [] ~foo:EXPR ~bar:EXPR2 ~bam
 
     PPX_HTML_KERNEL (diff):
-    -1,4 +1,4
+    === DIFF HUNK ===
       component
     -|  ~attrs:[(((Html_syntax.Attr.attr1)[@merlin.focus ]) EXPR : Virtual_dom.Vdom.Attr.t);
     +|  ~attrs:[((Html_syntax.Attr.attr1)[@merlin.focus ]) EXPR;
@@ -198,7 +198,7 @@ let%expect_test "Double attr" =
              Virtual_dom.Vdom.Attr.t)] [] ~foo:EXPR ~bar:EXPR2 ~attr:[] ~bam
 
     PPX_HTML_KERNEL (diff):
-    -1,4 +1,4
+    === DIFF HUNK ===
       Foo.f
     -|  ~attrs:[(((Html_syntax.Attr.attr1)[@merlin.focus ]) EXPR : Virtual_dom.Vdom.Attr.t);
     +|  ~attrs:[((Html_syntax.Attr.attr1)[@merlin.focus ]) EXPR;
