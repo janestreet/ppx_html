@@ -230,11 +230,10 @@ let parse_expr_common ~locs : interpolation Angstrom.t =
      and code = scan_through_ocaml_expression_until_unclosed_curly_brace ~locs
      and end_ = pos
      and () = string "}" in
-     let code, end_, to_t =
+     let code, to_t =
        match Ocaml_parsing.rsplit_on_hash code with
-       | None -> code, end_, None
+       | None -> code, None
        | Some (code, to_t) ->
-         let length = String.length to_t in
          let to_t =
            { txt = to_t
            ; loc = Locations.location locs ~start:(end_ - String.length to_t - 1) ~end_
@@ -246,7 +245,7 @@ let parse_expr_common ~locs : interpolation Angstrom.t =
            | { pexp_loc; _ } ->
              Location.raise_errorf ~loc:pexp_loc "Expected a module identifier (e.g. Foo)"
          in
-         code, end_ - length - 1, Some to_t
+         code, Some to_t
      in
      let code =
        { txt = "(" ^ code ^ ")"; loc = Locations.location locs ~start:(start - 1) ~end_ }

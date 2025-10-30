@@ -70,6 +70,204 @@ familiar syntax:
 | `<Foo.f ~foo></>`                  | Shorthand for `<Foo.f ~foo:%{foo}></>` (also supports ?optional arguments).              |
 | `{%html|<></>|}`                   | Will call `Vdom.Node.fragment`.                                                          |
 
+Custom OCaml components and function-call syntax
+------------------------------------------------
+
+In addition to HTML tags, you can call OCaml functions as if they were tags.
+Both the existing manual syntax and the new sugary syntax are supported.
+
+Existing manual custom component syntax:
+
+<!-- $MDX file=./examples/ppx_html_examples.ml,part=simple-syntax-preamble -->
+```ocaml
+module Custom_typography = struct
+  let text children = {%html|<span style="color: #a1a1a1"> *{children} </span>|}
+end
+```
+<!-- $MDX file=./examples/ppx_html_examples.ml,part=simple-syntax-manual -->
+```ocaml
+     {%html|
+       <div>
+         <%{Custom_typography.text}>
+           <strong>Capybara</strong> UI
+         </>
+       </div>
+     |}
+```
+
+Or more sugary syntax for the same call:
+
+<!-- $MDX file=./examples/ppx_html_examples.ml,part=simple-syntax-sugar -->
+```ocaml
+     {%html|
+       <div>
+         <Custom_typography.text>
+           <strong>Capybara</strong> UI
+         </>
+       </div>
+     |}
+```
+
+You can also pass named and optional OCaml arguments directly in the tag head, and mix them with HTML-style attributes that become Vdom.Attr.t values. The %{}, *{}, and ?{} forms work both for children and for attributes.
+
+<!-- $MDX file=./examples/ppx_html_examples.ml,part=many-syntaxes-sugar -->
+```ocaml
+     {%html|
+       <div>
+         <Custom_typography.text>
+           <strong>Capybara</strong> UI
+         </>
+
+         <!-- Function with children and attributes. Named args use ~, optional args use ?. -->
+         <Button.view
+           ~on_click
+           ~variant:%{Variant.Filled}
+           ~size:%{`Xs}
+           %{tomato : Vdom.Attr.t}
+           disabled
+         >
+           Hello!
+         </>
+
+         <!-- Self-closing function with optional arg punning -->
+         <Loading_indicator.spinner ?icon />
+       </div>
+     |}
+```
+
+Which expands to:
+
+<!-- $MDX file=./examples/ppx_html_examples.ml,part=many-syntaxes-expanded -->
+```ocaml
+     Vdom.Node.div
+       [ Custom_typography.text
+           [ Vdom.Node.strong [ Vdom.Node.text "Workflow" ]; Vdom.Node.text "UI" ]
+       ; Button.view
+           ~on_click
+           ~variant:Variant.Filled
+           ~size:`Xs
+           ~attrs:[ tomato; Vdom.Attr.disabled ]
+           [ Vdom.Node.text "Hello!" ]
+       ; Loading_indicator.spinner ?icon ()
+       ]
+```
+
+The Vdom.Attr.t type annotation above is only for illustration.
+
+How to write APIs that support the sugary syntax
+-----------------------------------------------
+
+To be callable as a tag:
+
+- With children: write a function of type `Vdom.Node.t list -> Vdom.Node.t`
+  - Call sites can write `<Foo.f> child1 child2 </>` (or `</Foo.f>`)
+- Self-closing: write a function of type `unit -> Vdom.Node.t`
+  - Call sites can write `<Foo.f />`
+
+If you want callers to be able to pass attributes, add the magic optional `?attrs : Vdom.Attr.t list` argument to your function. Any HTML-style attributes written at the call site will be collected and passed as this list.
+
+For example:
+
+<!-- $MDX file=./examples/ppx_html_examples.ml,part=how-to-write-apis-preamble -->
+```ocaml
+module Components = struct
+  let button ?(attrs : Vdom.Attr.t list = []) (children : Vdom.Node.t list) =
+    {%html|
+      <button style="background-color: tomato" *{attrs}>
+        *{children}
+      </button>
+    |}
+  ;;
+
+  let image ?(attrs : Vdom.Attr.t list = []) () =
+    {%html|<img style="width: 50%" *{attrs} />|}
+  ;;
+end
+```
+
+Usage:
+
+<!-- $MDX file=./examples/ppx_html_examples.ml,part=how-to-write-apis-usage -->
+```ocaml
+     {%html|
+       <div>
+         <Components.button on_click=%{fun _ -> order_tomato}>
+           Order Tomato
+         </>
+         <Components.image src="./images/order-confirmation.png" />
+       </div>
+     |}
+```
+
+You can also add named and optional arguments; callers pass them with `~arg:%{expr}` or `?arg:%{expr}`. Punning is supported: `~foo` and `?foo` are shorthand for `~foo:%{foo}` and `?foo:%{foo}`.
+
+<!-- $MDX file=./examples/ppx_html_examples.ml,part=how-to-write-apis-preamble-2 -->
+```ocaml
+  module Components = struct
+    let button ?(icon : Icon.t option) ?(attrs = []) children =
+      let icon = icon |> Option.map Icon.view in
+      {%html|
+        <button style="background-color: tomato" *{attrs}>
+          ?{icon} *{children}
+        </button>
+      |}
+    ;;
+  end
+```
+
+<!-- $MDX file=./examples/ppx_html_examples.ml,part=how-to-write-apis-usage-2 -->
+```ocaml
+       {%html|
+         <Components.button ~icon:%{Heart} on_click=%{fun _ -> order_tomato}>
+           Order Tomato
+         </>
+       |}
+```
+
+Expands to:
+
+<!-- $MDX file=./examples/ppx_html_examples.ml,part=how-to-write-apis-usage-2-expanded -->
+```ocaml
+       Components.button
+         ~icon:Heart
+         ~attrs:[ Vdom.Attr.on_click (fun _ -> order_tomato) ]
+         [ Vdom.Node.text "Order Tomato" ]
+```
+
+Rules and notes:
+- Call sites must include at least one module qualifier (e.g., `Foo.f`); otherwise `ppx_html` looks for `Vdom.Node.*`.
+- Only named/optional OCaml arguments are supported in tag position; besides children or unit, positional arguments are not supported.
+- The magic `?attrs` is where HTML attributes from the tag head are collected, e.g., `disabled`, `on_click=%{...}`, etc.
+
+Quick reference for %{}, *{}, and ?{}
+-------------------------------------
+
+Children position:
+
+<!-- $MDX file=./examples/ppx_html_examples.ml,part=quick-ref-children -->
+```ocaml
+     {%html|
+       <>
+         <div>%{child : Vdom.Node.t}<!-- single --></div>
+         <div>*{children : Vdom.Node.t list}<!-- many --></div>
+         <div>?{maybe_child : Vdom.Node.t option}<!-- optional --></div>
+       </>
+     |}
+```
+
+Attribute position:
+
+<!-- $MDX file=./examples/ppx_html_examples.ml,part=quick-ref-attrs -->
+```ocaml
+     {%html|
+       <>
+         <div %{attr : Vdom.Attr.t}><!-- single --></div>
+         <div *{attrs : Vdom.Attr.t list}><!-- many --></div>
+         <div ?{maybe_attr : Vdom.Attr.t option}><!-- optional --></div>
+       </>
+     |}
+```
+
 Attribute Syntax
 ----------------
 
@@ -158,7 +356,7 @@ There is an `Html_syntax` for `lib/html` in the library `ppx_html_lib_html_synta
 open! Core
 open Ppx_html_lib_html_syntax.Html_syntax
 
-let hello = 
+let hello =
     {%html|
         <html>
           <head>
