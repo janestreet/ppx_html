@@ -12,6 +12,8 @@ build: [
 depends: [
   "ocaml" {>= "5.1.0"}
   "base"
+  "bonsai"
+  "bonsai_web"
   "core"
   "core_kernel"
   "expect_test_helpers_core"
@@ -22,6 +24,7 @@ depends: [
   "virtual_dom"
   "angstrom"                 {>= "0.15.0"}
   "dune"                     {>= "3.17.0"}
+  "js_of_ocaml-ppx"          {= "6.0.1+ox"}
   "ocaml-compiler-libs"      {= "v0.17.0+ox"}
   "ppxlib"                   {= "0.33.0+ox"}
 ]
