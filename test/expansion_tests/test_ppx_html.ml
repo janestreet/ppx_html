@@ -27,11 +27,10 @@ let%expect_test "Nesting" =
 ;;
 
 let%expect_test "HTML Custom elements" =
-  (* NOTE: This test only shows current behavior and is not
-     necesarily a bug/something we should fix. A potential scenario
-     is that for custom elements like there (i.e. ones that are kebab-case
-     we could use Vdom.Node.create "custom-element" instead.). Also unsure
-     if this should be supported as it's also supported via the interpolation
+  (* NOTE: This test only shows current behavior and is not necesarily a bug/something we
+     should fix. A potential scenario is that for custom elements like there (i.e. ones
+     that are kebab-case we could use Vdom.Node.create "custom-element" instead.). Also
+     unsure if this should be supported as it's also supported via the interpolation
      syntax.
 
      https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements *)
@@ -41,7 +40,7 @@ let%expect_test "HTML Custom elements" =
     <custom-element></custom-element>
   |});
   [%expect {| ("Expected closing '>' to terminate element \"custom\", but found '-'") |}];
-  (* This is a current possible workaround in this rare  situation. *)
+  (* This is a current possible workaround in this rare situation. *)
   test
     {|
     <%{Vdom.Node.create "custom-element"}></>
@@ -139,8 +138,8 @@ let%expect_test "Attributes and element tag interpolation" =
 ;;
 
 let%expect_test "Key-based attribute interpolation" =
-  (* NOTE: This currently only demonstrates existing behavior of
-     a feature we may want to support in the future. *)
+  (* NOTE: This currently only demonstrates existing behavior of a feature we may want to
+     support in the future. *)
   Expect_test_helpers_core.require_does_raise (fun () ->
     test
       {|
@@ -204,10 +203,10 @@ let%expect_test "Many classes used at once" =
      [Vdom.Attr.classes] instead, but I think that using [Vdom.Attr.class] is the same
      behavior.
 
-     After double-double checking, it seems like it's not exactly 1:1 with what we
-     do in [virtual_dom]. In virtual_dom, using [Virtual_dom.Attr.classes] attempts
-     to combine the classes, which I think is maybe something we should attempt
-     here, although I still probably need to think more about this.
+     After double-double checking, it seems like it's not exactly 1:1 with what we do in
+     [virtual_dom]. In virtual_dom, using [Virtual_dom.Attr.classes] attempts to combine
+     the classes, which I think is maybe something we should attempt here, although I
+     still probably need to think more about this.
   *)
   test {|<div class="foo bar baz"></div>|};
   [%expect
@@ -233,10 +232,10 @@ let%expect_test "classes with substitutions" =
      [Vdom.Attr.classes] instead, but I think that using [Vdom.Attr.class] is the same
      behavior.
 
-     After double-double checking, it seems like it's not exactly 1:1 with what we
-     do in [virtual_dom]. In virtual_dom, using [Virtual_dom.Attr.classes] attempts
-     to combine the classes, which I think is maybe something we should attempt
-     here, although I still probably need to think more about this.
+     After double-double checking, it seems like it's not exactly 1:1 with what we do in
+     [virtual_dom]. In virtual_dom, using [Virtual_dom.Attr.classes] attempts to combine
+     the classes, which I think is maybe something we should attempt here, although I
+     still probably need to think more about this.
   *)
   test {|<div class="foo-%{"bar"}-baz fizz %{"other"}"></div>|};
   [%expect
@@ -423,7 +422,7 @@ let%expect_test "Duplicate attribute names." =
     {|
     <div a="1" a="2"></div>
   |};
-  (* How these are handled is deferred to the implementation of [?attrs]*)
+  (* How these are handled is deferred to the implementation of [?attrs] *)
   [%expect
     {|
     Difference between ppx_html and ppx_html_kernel
@@ -520,9 +519,9 @@ let%expect_test "ppx_html inside of ppx_html" =
   test
     {|<div no_quotes=1 with_quotes="2"> %{[%html{x|<p>hello</p>|x}]}</div>
 |};
-  (* NOTE: This is a limitation of the test harness, and not the
-     actual PPX. In ppx-land this test should fully expand, and can be tested
-     in a different way. This test only runs a single invocation of the PPX. *)
+  (* NOTE: This is a limitation of the test harness, and not the actual PPX. In ppx-land
+     this test should fully expand, and can be tested in a different way. This test only
+     runs a single invocation of the PPX. *)
   [%expect
     {|
     Difference between ppx_html and ppx_html_kernel
@@ -612,10 +611,11 @@ let%expect_test "Childless HTML Tags - need a closing slash" =
 ;;
 
 let%expect_test "Sexp for debugging" =
-  (* NOTE: This is only demonstrates existing behavior. I think it'd be cool to
-     be able to put things like sexp_for_debugging. Maybe it could be something like:
+  (* NOTE: This is only demonstrates existing behavior. I think it'd be cool to be able to
+     put things like sexp_for_debugging. Maybe it could be something like:
 
-     [%html {|<div>%{(foo : string list)}</div>|}], although also not super hyped about it. *)
+     [%html {|<div>%{(foo : string list)}</div>|}], although also not super hyped about
+     it. *)
   test
     {|
     <%{Vdom.Node.sexp_for_debugging}>

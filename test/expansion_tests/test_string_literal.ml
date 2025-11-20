@@ -72,8 +72,8 @@ let%expect_test "The string literal interpolation only happens in a node context
 ;;
 
 let%expect_test "The interpolation does not happen if a modul is provided" =
-  (* NOTE: this is weird. This is always a mistake, but at least this
-     expansion will result in a nice error message. *)
+  (* NOTE: this is weird. This is always a mistake, but at least this expansion will
+     result in a nice error message. *)
   test {|<div> %{"constant"#Modul} </div>|};
   [%expect
     {|

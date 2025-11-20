@@ -16,10 +16,10 @@ let%expect_test "Bonsai's hello world HTML" =
        <meta/>
      ]}
 
-     The same applied to <br>, <hr>, <img>, and other childless nodes. Unsure
-     what is the best way of solving it. I personally think that HTML is wrong,
-     and the current behavior is better. I think that as long as we provide a nice,
-     descriptive error message I think I'm also happy keeping the current behavior.
+     The same applied to <br>, <hr>, <img>, and other childless nodes. Unsure what is the
+     best way of solving it. I personally think that HTML is wrong, and the current
+     behavior is better. I think that as long as we provide a nice, descriptive error
+     message I think I'm also happy keeping the current behavior.
   *)
   test
     {|

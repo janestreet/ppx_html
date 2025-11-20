@@ -29,7 +29,7 @@ let%expect_test "HTML Quote escaping is handled correctly (implicit)" =
 
 let%expect_test "HTML Quote escaping is handled correctly (explicit)" =
   (* NOTE: There seems to be a bug in the underlying library (html_escape) that does not
-     encode/decode &nbsp's ...  We ended up choosing not to include html based
+     encode/decode &nbsp's ... We ended up choosing not to include html based
      unescaping... *)
   test {|<div>Capybaras are the world&nbsp;s largest living rodent.</div>|};
   [%expect

@@ -1,6 +1,3 @@
-PPX_HTML
-========
-
 `ppx_html` is a PPX that lets you write HTML inside of OCaml 🐪 programs. It is
 spiritually similar to [JSX](<https://en.wikipedia.org/wiki/JSX_(JavaScript)>).
 

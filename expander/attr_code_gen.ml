@@ -55,12 +55,12 @@ let style_code ~loc ~html_syntax_module ~runtime_kind = function
          let css_string_expression =
            C.pexp_constant
              ~loc:css.loc
-             (* [prettier] truncates trailing semicolons if the style attribute
-                is a single line. There's no way to change this in prettier. This is 
-                considered an error in the new parser, so we have to always append
-                a trailing semicolon to the end of the style block before passing it to
-                [ppx_css]. This should always be fine, as extraneous semicolons are parsed
-                and ignored.
+             (* [prettier] truncates trailing semicolons if the style attribute is a
+                single line. There's no way to change this in prettier. This is considered
+                an error in the new parser, so we have to always append a trailing
+                semicolon to the end of the style block before passing it to [ppx_css].
+                This should always be fine, as extraneous semicolons are parsed and
+                ignored.
              *)
              (Pconst_string (Model.Quote.to_source css ^ ";", css.loc, None))
          in

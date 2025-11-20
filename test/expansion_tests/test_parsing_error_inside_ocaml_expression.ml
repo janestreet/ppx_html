@@ -2,8 +2,8 @@ open! Core
 open Test_utils
 
 let%expect_test "Syntax error inside of OCaml expression" =
-  (* NOTE: This is a regression test against a test where the errors
-     inside of embedded OCaml are eaten up. *)
+  (* NOTE: This is a regression test against a test where the errors inside of embedded
+     OCaml are eaten up. *)
   Expect_test_helpers_core.require_does_raise (fun () ->
     test
       {|
