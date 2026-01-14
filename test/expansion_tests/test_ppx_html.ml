@@ -27,11 +27,10 @@ let%expect_test "Nesting" =
 ;;
 
 let%expect_test "HTML Custom elements" =
-  (* NOTE: This test only shows current behavior and is not
-     necesarily a bug/something we should fix. A potential scenario
-     is that for custom elements like there (i.e. ones that are kebab-case
-     we could use Vdom.Node.create "custom-element" instead.). Also unsure
-     if this should be supported as it's also supported via the interpolation
+  (* NOTE: This test only shows current behavior and is not necesarily a bug/something we
+     should fix. A potential scenario is that for custom elements like there (i.e. ones
+     that are kebab-case we could use Vdom.Node.create "custom-element" instead.). Also
+     unsure if this should be supported as it's also supported via the interpolation
      syntax.
 
      https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements *)
@@ -41,7 +40,7 @@ let%expect_test "HTML Custom elements" =
     <custom-element></custom-element>
   |});
   [%expect {| ("Expected closing '>' to terminate element \"custom\", but found '-'") |}];
-  (* This is a current possible workaround in this rare  situation. *)
+  (* This is a current possible workaround in this rare situation. *)
   test
     {|
     <%{Vdom.Node.create "custom-element"}></>
@@ -139,8 +138,8 @@ let%expect_test "Attributes and element tag interpolation" =
 ;;
 
 let%expect_test "Key-based attribute interpolation" =
-  (* NOTE: This currently only demonstrates existing behavior of
-     a feature we may want to support in the future. *)
+  (* NOTE: This currently only demonstrates existing behavior of a feature we may want to
+     support in the future. *)
   Expect_test_helpers_core.require_does_raise (fun () ->
     test
       {|
@@ -183,15 +182,9 @@ let%expect_test "Interpolation with no parsing context" =
   test {|%{foo}|};
   [%expect
     {|
-    Difference between ppx_html and ppx_html_kernel
+    same output between ppx_html and ppx_html_kernel
 
-    PPX_HTML:
-    (foo : Virtual_dom.Vdom.Node.t)
-
-    PPX_HTML_KERNEL (diff):
-    === DIFF HUNK ===
-    -|(foo : Virtual_dom.Vdom.Node.t)
-    +|foo
+    (foo : _)
     |}];
   (* NOTE: Wow! It using fragment implicitly here is really cool! *)
   Expect_test_helpers_core.require_does_raise (fun () -> test {|%{foo} %{bar}|});
@@ -204,10 +197,10 @@ let%expect_test "Many classes used at once" =
      [Vdom.Attr.classes] instead, but I think that using [Vdom.Attr.class] is the same
      behavior.
 
-     After double-double checking, it seems like it's not exactly 1:1 with what we
-     do in [virtual_dom]. In virtual_dom, using [Virtual_dom.Attr.classes] attempts
-     to combine the classes, which I think is maybe something we should attempt
-     here, although I still probably need to think more about this.
+     After double-double checking, it seems like it's not exactly 1:1 with what we do in
+     [virtual_dom]. In virtual_dom, using [Virtual_dom.Attr.classes] attempts to combine
+     the classes, which I think is maybe something we should attempt here, although I
+     still probably need to think more about this.
   *)
   test {|<div class="foo bar baz"></div>|};
   [%expect
@@ -233,10 +226,10 @@ let%expect_test "classes with substitutions" =
      [Vdom.Attr.classes] instead, but I think that using [Vdom.Attr.class] is the same
      behavior.
 
-     After double-double checking, it seems like it's not exactly 1:1 with what we
-     do in [virtual_dom]. In virtual_dom, using [Virtual_dom.Attr.classes] attempts
-     to combine the classes, which I think is maybe something we should attempt
-     here, although I still probably need to think more about this.
+     After double-double checking, it seems like it's not exactly 1:1 with what we do in
+     [virtual_dom]. In virtual_dom, using [Virtual_dom.Attr.classes] attempts to combine
+     the classes, which I think is maybe something we should attempt here, although I
+     still probably need to think more about this.
   *)
   test {|<div class="foo-%{"bar"}-baz fizz %{"other"}"></div>|};
   [%expect
@@ -283,48 +276,43 @@ let%expect_test "Complex-ish test case" =
              (((Html_syntax.Attr.on_click)[@merlin.focus ])
                 (fun _ -> Effect.print_s ([%message "capybaras are cool"])) :
              Virtual_dom.Vdom.Attr.t)]
-      [(title : Virtual_dom.Vdom.Node.t);
+      [(title : _);
       Html_syntax.Node.span
         ~attrs:[(((Html_syntax.Attr.class_)[@merlin.focus ]) "pill" : Virtual_dom.Vdom.Attr.t);
                (((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-verb" :
-               Virtual_dom.Vdom.Attr.t)]
-        [(Vdom.Node.text verb : Virtual_dom.Vdom.Node.t)];
+               Virtual_dom.Vdom.Attr.t)] [(Vdom.Node.text verb : _)];
       Html_syntax.Node.span
         ~attrs:[(((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-text" :
-               Virtual_dom.Vdom.Attr.t)]
-        [(Vdom.Node.text text : Virtual_dom.Vdom.Node.t)];
-      (help : Virtual_dom.Vdom.Node.t)]
+               Virtual_dom.Vdom.Attr.t)] [(Vdom.Node.text text : _)];
+      (help : _)]
 
     PPX_HTML_KERNEL (diff):
     === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[(Html_syntax.Attr.classes ["menu-add-card"] : Virtual_dom.Vdom.Attr.t);
-    -|         (((Html_syntax.Attr.on_click)[@merlin.focus ])
     +|  ~attrs:[((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card";
+    -|         (((Html_syntax.Attr.on_click)[@merlin.focus ])
     +|         ((Html_syntax.Attr.on_click)[@merlin.focus ])
     -|            (fun _ -> Effect.print_s ([%message "capybaras are cool"])) :
     -|         Virtual_dom.Vdom.Attr.t)]
-    -|  [(title : Virtual_dom.Vdom.Node.t);
     +|           (fun _ -> Effect.print_s ([%message "capybaras are cool"]))]
-    +|  [title;
+    -|  [(title : _);
     -|  Html_syntax.Node.span
     -|    ~attrs:[(((Html_syntax.Attr.class_)[@merlin.focus ]) "pill" : Virtual_dom.Vdom.Attr.t);
+    +|  [(title : _);
     +|  Html_syntax.Node.span
     +|    ~attrs:[((Html_syntax.Attr.class_)[@merlin.focus ]) "pill";
     -|           (((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-verb" :
-    -|           Virtual_dom.Vdom.Attr.t)]
-    -|    [(Vdom.Node.text verb : Virtual_dom.Vdom.Node.t)];
+    -|           Virtual_dom.Vdom.Attr.t)] [(Vdom.Node.text verb : _)];
     +|           ((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-verb"]
-    +|    [Vdom.Node.text verb];
+    +|    [(Vdom.Node.text verb : _)];
     -|  Html_syntax.Node.span
     -|    ~attrs:[(((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-text" :
-    -|           Virtual_dom.Vdom.Attr.t)]
-    -|    [(Vdom.Node.text text : Virtual_dom.Vdom.Node.t)];
-    -|  (help : Virtual_dom.Vdom.Node.t)]
+    -|           Virtual_dom.Vdom.Attr.t)] [(Vdom.Node.text text : _)];
     +|  Html_syntax.Node.span
     +|    ~attrs:[((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-text"]
-    +|    [Vdom.Node.text text];
-    +|  help]
+    +|    [(Vdom.Node.text text : _)];
+        (help : _)]
     |}]
 ;;
 
@@ -423,7 +411,7 @@ let%expect_test "Duplicate attribute names." =
     {|
     <div a="1" a="2"></div>
   |};
-  (* How these are handled is deferred to the implementation of [?attrs]*)
+  (* How these are handled is deferred to the implementation of [?attrs] *)
   [%expect
     {|
     Difference between ppx_html and ppx_html_kernel
@@ -520,9 +508,9 @@ let%expect_test "ppx_html inside of ppx_html" =
   test
     {|<div no_quotes=1 with_quotes="2"> %{[%html{x|<p>hello</p>|x}]}</div>
 |};
-  (* NOTE: This is a limitation of the test harness, and not the
-     actual PPX. In ppx-land this test should fully expand, and can be tested
-     in a different way. This test only runs a single invocation of the PPX. *)
+  (* NOTE: This is a limitation of the test harness, and not the actual PPX. In ppx-land
+     this test should fully expand, and can be tested in a different way. This test only
+     runs a single invocation of the PPX. *)
   [%expect
     {|
     Difference between ppx_html and ppx_html_kernel
@@ -531,19 +519,16 @@ let%expect_test "ppx_html inside of ppx_html" =
     Html_syntax.Node.div
       ~attrs:[(((Html_syntax.Attr.no_quotes)[@merlin.focus ]) "1" : Virtual_dom.Vdom.Attr.t);
              (((Html_syntax.Attr.with_quotes)[@merlin.focus ]) "2" : Virtual_dom.Vdom.Attr.t)]
-      [Html_syntax.Node.Primitives.text " ";
-      ([%html {x|<p>hello</p>|x}] : Virtual_dom.Vdom.Node.t)]
+      [Html_syntax.Node.Primitives.text " "; ([%html {x|<p>hello</p>|x}] : _)]
 
     PPX_HTML_KERNEL (diff):
     === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[(((Html_syntax.Attr.no_quotes)[@merlin.focus ]) "1" : Virtual_dom.Vdom.Attr.t);
-    -|         (((Html_syntax.Attr.with_quotes)[@merlin.focus ]) "2" : Virtual_dom.Vdom.Attr.t)]
     +|  ~attrs:[((Html_syntax.Attr.no_quotes)[@merlin.focus ]) "1";
+    -|         (((Html_syntax.Attr.with_quotes)[@merlin.focus ]) "2" : Virtual_dom.Vdom.Attr.t)]
     +|         ((Html_syntax.Attr.with_quotes)[@merlin.focus ]) "2"]
-    -|  [Html_syntax.Node.Primitives.text " ";
-    -|  ([%html {x|<p>hello</p>|x}] : Virtual_dom.Vdom.Node.t)]
-    +|  [Html_syntax.Node.Primitives.text " "; [%html {x|<p>hello</p>|x}]]
+        [Html_syntax.Node.Primitives.text " "; ([%html {x|<p>hello</p>|x}] : _)]
     |}]
 ;;
 
@@ -612,10 +597,11 @@ let%expect_test "Childless HTML Tags - need a closing slash" =
 ;;
 
 let%expect_test "Sexp for debugging" =
-  (* NOTE: This is only demonstrates existing behavior. I think it'd be cool to
-     be able to put things like sexp_for_debugging. Maybe it could be something like:
+  (* NOTE: This is only demonstrates existing behavior. I think it'd be cool to be able to
+     put things like sexp_for_debugging. Maybe it could be something like:
 
-     [%html {|<div>%{(foo : string list)}</div>|}], although also not super hyped about it. *)
+     [%html {|<div>%{(foo : string list)}</div>|}], although also not super hyped about
+     it. *)
   test
     {|
     <%{Vdom.Node.sexp_for_debugging}>
@@ -666,7 +652,7 @@ let%expect_test "Other forms of html escaping" =
 let%expect_test "Comments" =
   (* NOTE: This only documents current behavior and is not necessary a bug. *)
   (* HTML comments do not work. It would be cool if it gave a more descriptive error
-     message on the misparse.  *)
+     message on the misparse. *)
   test
     {|
     <div>
@@ -692,21 +678,10 @@ let%expect_test "Comments" =
   |};
   [%expect
     {|
-    Difference between ppx_html and ppx_html_kernel
+    same output between ppx_html and ppx_html_kernel
 
-    PPX_HTML:
     Html_syntax.Node.div
-      [Html_syntax.Node.div [];
-      (Vdom.Node.none : Virtual_dom.Vdom.Node.t);
-      Html_syntax.Node.div []]
-
-    PPX_HTML_KERNEL (diff):
-    === DIFF HUNK ===
-      Html_syntax.Node.div
-    -|  [Html_syntax.Node.div [];
-    -|  (Vdom.Node.none : Virtual_dom.Vdom.Node.t);
-    -|  Html_syntax.Node.div []]
-    +|  [Html_syntax.Node.div []; Vdom.Node.none; Html_syntax.Node.div []]
+      [Html_syntax.Node.div []; (Vdom.Node.none : _); Html_syntax.Node.div []]
     |}]
 ;;
 

@@ -19,8 +19,7 @@ module Type = struct
          already added elsewhere, and also adding it here results in a double Vdom.Attr.t
          annotation. *)
       None
-    | Node { interpolation_kind = _ }, Js_of_ocaml -> Some (Shared.node_t_type ~loc)
-    | Node { interpolation_kind = _ }, Kernel -> None
+    | Node { interpolation_kind = _ }, (Js_of_ocaml | Kernel) -> Some [%type: _]
     | Argument, _ -> None
   ;;
 

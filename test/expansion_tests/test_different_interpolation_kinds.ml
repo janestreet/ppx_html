@@ -6,19 +6,11 @@ module%test [@name "?{} - really basic sanity tests"] _ = struct
     test {|<div>?{EXPR}</div>|};
     [%expect
       {|
-      Difference between ppx_html and ppx_html_kernel
+      same output between ppx_html and ppx_html_kernel
 
-      PPX_HTML:
       Html_syntax.Node.div
         [((match EXPR with | None -> Html_syntax.Node.Primitives.none | Some x -> x) :
-        Virtual_dom.Vdom.Node.t)]
-
-      PPX_HTML_KERNEL (diff):
-      === DIFF HUNK ===
-        Html_syntax.Node.div
-      -|  [((match EXPR with | None -> Html_syntax.Node.Primitives.none | Some x -> x) :
-      -|  Virtual_dom.Vdom.Node.t)]
-      +|  [(match EXPR with | None -> Html_syntax.Node.Primitives.none | Some x -> x)]
+        _)]
       |}]
   ;;
 
@@ -49,24 +41,13 @@ module%test [@name "?{} - really basic sanity tests"] _ = struct
     test {|<div>?{EXPR#Foo}</div>|};
     [%expect
       {|
-      Difference between ppx_html and ppx_html_kernel
+      same output between ppx_html and ppx_html_kernel
 
-      PPX_HTML:
       Html_syntax.Node.div
         [((match EXPR with
            | None -> Html_syntax.Node.Primitives.none
            | Some x -> Html_syntax.Node.Primitives.text (Foo.to_string x)) :
-        Virtual_dom.Vdom.Node.t)]
-
-      PPX_HTML_KERNEL (diff):
-      === DIFF HUNK ===
-        Html_syntax.Node.div
-      -|  [((match EXPR with
-      +|  [(match EXPR with
-            | None -> Html_syntax.Node.Primitives.none
-      -|     | Some x -> Html_syntax.Node.Primitives.text (Foo.to_string x)) :
-      -|  Virtual_dom.Vdom.Node.t)]
-      +|    | Some x -> Html_syntax.Node.Primitives.text (Foo.to_string x))]
+        _)]
       |}]
   ;;
 
@@ -99,17 +80,9 @@ module%test [@name "*{} - really basic sanity tests"] _ = struct
     test {|<div>*{EXPR}</div>|};
     [%expect
       {|
-      Difference between ppx_html and ppx_html_kernel
+      same output between ppx_html and ppx_html_kernel
 
-      PPX_HTML:
-      Html_syntax.Node.div
-        [(Html_syntax.Node.Primitives.fragment EXPR : Virtual_dom.Vdom.Node.t)]
-
-      PPX_HTML_KERNEL (diff):
-      === DIFF HUNK ===
-      -|Html_syntax.Node.div
-      -|  [(Html_syntax.Node.Primitives.fragment EXPR : Virtual_dom.Vdom.Node.t)]
-      +|Html_syntax.Node.div [Html_syntax.Node.Primitives.fragment EXPR]
+      Html_syntax.Node.div [(Html_syntax.Node.Primitives.fragment EXPR : _)]
       |}]
   ;;
 
@@ -137,24 +110,13 @@ module%test [@name "*{} - really basic sanity tests"] _ = struct
     test {|<div>*{EXPR#Foo}</div>|};
     [%expect
       {|
-      Difference between ppx_html and ppx_html_kernel
+      same output between ppx_html and ppx_html_kernel
 
-      PPX_HTML:
       Html_syntax.Node.div
         [(Html_syntax.Node.Primitives.fragment
             (Ppx_html_runtime.List.map EXPR
                ~f:(fun x -> Html_syntax.Node.Primitives.text (Foo.to_string x))) :
-        Virtual_dom.Vdom.Node.t)]
-
-      PPX_HTML_KERNEL (diff):
-      === DIFF HUNK ===
-        Html_syntax.Node.div
-      -|  [(Html_syntax.Node.Primitives.fragment
-      +|  [Html_syntax.Node.Primitives.fragment
-             (Ppx_html_runtime.List.map EXPR
-      -|         ~f:(fun x -> Html_syntax.Node.Primitives.text (Foo.to_string x))) :
-      -|  Virtual_dom.Vdom.Node.t)]
-      +|        ~f:(fun x -> Html_syntax.Node.Primitives.text (Foo.to_string x)))]
+        _)]
       |}]
   ;;
 
@@ -186,38 +148,21 @@ let%expect_test "Asterisk with many other elements" =
   test {|<div>a *{EXPR} b</div>|};
   [%expect
     {|
-    Difference between ppx_html and ppx_html_kernel
+    same output between ppx_html and ppx_html_kernel
 
-    PPX_HTML:
     Html_syntax.Node.div
       [Html_syntax.Node.Primitives.text "a ";
-      (Html_syntax.Node.Primitives.fragment EXPR : Virtual_dom.Vdom.Node.t);
+      (Html_syntax.Node.Primitives.fragment EXPR : _);
       Html_syntax.Node.Primitives.text " b"]
-
-    PPX_HTML_KERNEL (diff):
-    === DIFF HUNK ===
-      Html_syntax.Node.div
-        [Html_syntax.Node.Primitives.text "a ";
-    -|  (Html_syntax.Node.Primitives.fragment EXPR : Virtual_dom.Vdom.Node.t);
-    +|  Html_syntax.Node.Primitives.fragment EXPR;
-        Html_syntax.Node.Primitives.text " b"]
     |}];
   test {|<div>*{EXPR} b</div>|};
   [%expect
     {|
-    Difference between ppx_html and ppx_html_kernel
+    same output between ppx_html and ppx_html_kernel
 
-    PPX_HTML:
     Html_syntax.Node.div
-      [(Html_syntax.Node.Primitives.fragment EXPR : Virtual_dom.Vdom.Node.t);
+      [(Html_syntax.Node.Primitives.fragment EXPR : _);
       Html_syntax.Node.Primitives.text " b"]
-
-    PPX_HTML_KERNEL (diff):
-    === DIFF HUNK ===
-      Html_syntax.Node.div
-    -|  [(Html_syntax.Node.Primitives.fragment EXPR : Virtual_dom.Vdom.Node.t);
-    +|  [Html_syntax.Node.Primitives.fragment EXPR;
-        Html_syntax.Node.Primitives.text " b"]
     |}]
 ;;
 
@@ -225,29 +170,15 @@ let%expect_test "Multiple asterisks" =
   test {|<div>a *{EXPR1} b *{EXPR2} *{EXPR3}</div>|};
   [%expect
     {|
-    Difference between ppx_html and ppx_html_kernel
+    same output between ppx_html and ppx_html_kernel
 
-    PPX_HTML:
     Html_syntax.Node.div
       [Html_syntax.Node.Primitives.text "a ";
-      (Html_syntax.Node.Primitives.fragment EXPR1 : Virtual_dom.Vdom.Node.t);
+      (Html_syntax.Node.Primitives.fragment EXPR1 : _);
       Html_syntax.Node.Primitives.text " b ";
-      (Html_syntax.Node.Primitives.fragment EXPR2 : Virtual_dom.Vdom.Node.t);
+      (Html_syntax.Node.Primitives.fragment EXPR2 : _);
       Html_syntax.Node.Primitives.text " ";
-      (Html_syntax.Node.Primitives.fragment EXPR3 : Virtual_dom.Vdom.Node.t)]
-
-    PPX_HTML_KERNEL (diff):
-    === DIFF HUNK ===
-      Html_syntax.Node.div
-        [Html_syntax.Node.Primitives.text "a ";
-    -|  (Html_syntax.Node.Primitives.fragment EXPR1 : Virtual_dom.Vdom.Node.t);
-    +|  Html_syntax.Node.Primitives.fragment EXPR1;
-        Html_syntax.Node.Primitives.text " b ";
-    -|  (Html_syntax.Node.Primitives.fragment EXPR2 : Virtual_dom.Vdom.Node.t);
-    +|  Html_syntax.Node.Primitives.fragment EXPR2;
-        Html_syntax.Node.Primitives.text " ";
-    -|  (Html_syntax.Node.Primitives.fragment EXPR3 : Virtual_dom.Vdom.Node.t)]
-    +|  Html_syntax.Node.Primitives.fragment EXPR3]
+      (Html_syntax.Node.Primitives.fragment EXPR3 : _)]
     |}]
 ;;
 
@@ -261,9 +192,9 @@ let%expect_test "Mixed syntaxes" =
     PPX_HTML:
     Html_syntax.Node.div
       [Html_syntax.Node.Primitives.text "a ";
-      (Html_syntax.Node.Primitives.fragment EXPR1 : Virtual_dom.Vdom.Node.t);
+      (Html_syntax.Node.Primitives.fragment EXPR1 : _);
       Html_syntax.Node.Primitives.text " b ";
-      (EXPR2 : Virtual_dom.Vdom.Node.t);
+      (EXPR2 : _);
       Html_syntax.Node.Primitives.text " ";
       Html_syntax.Node.div
         ~attrs:[(Html_syntax.Attr.Primitives.many EXPR : Virtual_dom.Vdom.Attr.t);
@@ -273,42 +204,34 @@ let%expect_test "Mixed syntaxes" =
         [((match EXPR_OPT with
            | None -> Html_syntax.Node.Primitives.none
            | Some x -> Html_syntax.Node.Primitives.text (Foo.to_string x)) :
-        Virtual_dom.Vdom.Node.t)];
+        _)];
       Html_syntax.Node.Primitives.text " ";
       ((match EXPR3 with | None -> Html_syntax.Node.Primitives.none | Some x -> x) :
-      Virtual_dom.Vdom.Node.t)]
+      _)]
 
     PPX_HTML_KERNEL (diff):
     === DIFF HUNK ===
       Html_syntax.Node.div
         [Html_syntax.Node.Primitives.text "a ";
-    -|  (Html_syntax.Node.Primitives.fragment EXPR1 : Virtual_dom.Vdom.Node.t);
-    +|  Html_syntax.Node.Primitives.fragment EXPR1;
+        (Html_syntax.Node.Primitives.fragment EXPR1 : _);
         Html_syntax.Node.Primitives.text " b ";
-    -|  (EXPR2 : Virtual_dom.Vdom.Node.t);
-    +|  EXPR2;
+        (EXPR2 : _);
         Html_syntax.Node.Primitives.text " ";
         Html_syntax.Node.div
     -|    ~attrs:[(Html_syntax.Attr.Primitives.many EXPR : Virtual_dom.Vdom.Attr.t);
     -|           ((match EXPR100 with
     +|    ~attrs:[Html_syntax.Attr.Primitives.many EXPR;
     +|           (match EXPR100 with
-    -|             | None -> Html_syntax.Attr.Primitives.empty
+                  | None -> Html_syntax.Attr.Primitives.empty
     -|             | Some x -> Bar.to_attr x) : Virtual_dom.Vdom.Attr.t)]
-    -|    [((match EXPR_OPT with
-    +|            | None -> Html_syntax.Attr.Primitives.empty
     +|            | Some x -> Bar.to_attr x)]
-    +|    [(match EXPR_OPT with
-    -|       | None -> Html_syntax.Node.Primitives.none
-    -|       | Some x -> Html_syntax.Node.Primitives.text (Foo.to_string x)) :
-    -|    Virtual_dom.Vdom.Node.t)];
-    +|      | None -> Html_syntax.Node.Primitives.none
-    +|      | Some x -> Html_syntax.Node.Primitives.text (Foo.to_string x))];
-    -|  Html_syntax.Node.Primitives.text " ";
-    -|  ((match EXPR3 with | None -> Html_syntax.Node.Primitives.none | Some x -> x) :
-    -|  Virtual_dom.Vdom.Node.t)]
-    +|  Html_syntax.Node.Primitives.text " ";
-    +|  (match EXPR3 with | None -> Html_syntax.Node.Primitives.none | Some x -> x)]
+          [((match EXPR_OPT with
+             | None -> Html_syntax.Node.Primitives.none
+             | Some x -> Html_syntax.Node.Primitives.text (Foo.to_string x)) :
+          _)];
+        Html_syntax.Node.Primitives.text " ";
+        ((match EXPR3 with | None -> Html_syntax.Node.Primitives.none | Some x -> x) :
+        _)]
     |}]
 ;;
 
@@ -396,38 +319,21 @@ module%test [@name "Using interpolation characters"] _ = struct
     test {|<div>\?{hi}</div>|};
     [%expect
       {|
-      Difference between ppx_html and ppx_html_kernel
+      same output between ppx_html and ppx_html_kernel
 
-      PPX_HTML:
       Html_syntax.Node.div
         [Html_syntax.Node.Primitives.text "\\";
         ((match hi with | None -> Html_syntax.Node.Primitives.none | Some x -> x) :
-        Virtual_dom.Vdom.Node.t)]
-
-      PPX_HTML_KERNEL (diff):
-      === DIFF HUNK ===
-        Html_syntax.Node.div
-          [Html_syntax.Node.Primitives.text "\\";
-      -|  ((match hi with | None -> Html_syntax.Node.Primitives.none | Some x -> x) :
-      -|  Virtual_dom.Vdom.Node.t)]
-      +|  (match hi with | None -> Html_syntax.Node.Primitives.none | Some x -> x)]
+        _)]
       |}];
     test {|<div>\*{hi}</div>|};
     [%expect
       {|
-      Difference between ppx_html and ppx_html_kernel
+      same output between ppx_html and ppx_html_kernel
 
-      PPX_HTML:
       Html_syntax.Node.div
         [Html_syntax.Node.Primitives.text "\\";
-        (Html_syntax.Node.Primitives.fragment hi : Virtual_dom.Vdom.Node.t)]
-
-      PPX_HTML_KERNEL (diff):
-      === DIFF HUNK ===
-        Html_syntax.Node.div
-          [Html_syntax.Node.Primitives.text "\\";
-      -|  (Html_syntax.Node.Primitives.fragment hi : Virtual_dom.Vdom.Node.t)]
-      +|  Html_syntax.Node.Primitives.fragment hi]
+        (Html_syntax.Node.Primitives.fragment hi : _)]
       |}]
   ;;
 end
@@ -437,36 +343,20 @@ module%test [@name "#{} - really basic sanity tests"] _ = struct
     test {|<div>#{EXPR}</div>|};
     [%expect
       {|
-      Difference between ppx_html and ppx_html_kernel
+      same output between ppx_html and ppx_html_kernel
 
-      PPX_HTML:
       Html_syntax.Node.div
-        [(Html_syntax.Node.Primitives.text ((EXPR)[@merlin.focus ]) : Virtual_dom.Vdom.Node.t)]
-
-      PPX_HTML_KERNEL (diff):
-      === DIFF HUNK ===
-        Html_syntax.Node.div
-      -|  [(Html_syntax.Node.Primitives.text ((EXPR)[@merlin.focus ]) : Virtual_dom.Vdom.Node.t)]
-      +|  [Html_syntax.Node.Primitives.text ((EXPR)[@merlin.focus ])]
+        [(Html_syntax.Node.Primitives.text ((EXPR)[@merlin.focus ]) : _)]
       |}];
     test {|<div>Hello #{EXPR}!</div>|};
     [%expect
       {|
-      Difference between ppx_html and ppx_html_kernel
+      same output between ppx_html and ppx_html_kernel
 
-      PPX_HTML:
       Html_syntax.Node.div
         [Html_syntax.Node.Primitives.text "Hello ";
-        (Html_syntax.Node.Primitives.text ((EXPR)[@merlin.focus ]) : Virtual_dom.Vdom.Node.t);
+        (Html_syntax.Node.Primitives.text ((EXPR)[@merlin.focus ]) : _);
         Html_syntax.Node.Primitives.text "!"]
-
-      PPX_HTML_KERNEL (diff):
-      === DIFF HUNK ===
-        Html_syntax.Node.div
-          [Html_syntax.Node.Primitives.text "Hello ";
-      -|  (Html_syntax.Node.Primitives.text ((EXPR)[@merlin.focus ]) : Virtual_dom.Vdom.Node.t);
-      +|  Html_syntax.Node.Primitives.text ((EXPR)[@merlin.focus ]);
-          Html_syntax.Node.Primitives.text "!"]
       |}]
   ;;
 

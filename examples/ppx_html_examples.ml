@@ -208,6 +208,43 @@ module Foo = struct
        (* $MDX part-end *)
        : Vdom.Node.t)
   ;;
+
+  (* $MDX part-begin=how-to-write-apis-preamble-3 *)
+  module Container = struct
+    let view ?(footer : Vdom.Node.t option) ~(header : Vdom.Node.t) children =
+      {%html|
+        <div class="container">
+          <header>%{header}</header>
+          <main>*{children}</main>
+          ?{footer}
+        </div>
+      |}
+    ;;
+  end
+  (* $MDX part-end *)
+
+  let () =
+    ignore
+      ((* $MDX part-begin=how-to-write-apis-usage-3 *)
+       {%html|
+         <Container.view ~header:(<h1>Capybara!</h1>) ~footer:(<p>Capyright 2026</p>)>
+           <p>Capybaras are the world's largest living rodent.</p>
+         </>
+       |}
+       (* $MDX part-end *)
+       : Vdom.Node.t)
+  ;;
+
+  let () =
+    ignore
+      ((* $MDX part-begin=how-to-write-apis-usage-3-expanded *)
+       Container.view
+         ~header:{%html|<h1>Capybara!</h1>|}
+         ~footer:{%html|<p>Capyright 2026</p>|}
+         [ {%html|<p>Capybaras are the world's largest living rodent.</p>|} ]
+       (* $MDX part-end *)
+       : Vdom.Node.t)
+  ;;
 end
 
 let () =

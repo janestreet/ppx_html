@@ -63,44 +63,6 @@ module Quote : sig
   val to_source : t -> string
 end
 
-module Attr : sig
-  module Value : sig
-    type t =
-      | Literal of Quote.t
-      | Expr of Expr.t
-    [@@deriving sexp_of]
-
-    val loc : t -> Ppxlib.Location.t
-  end
-
-  module Sigil : sig
-    type t =
-      | Tilde
-      | Question_mark
-    [@@deriving sexp_of]
-  end
-
-  type t =
-    | Attr of
-        { name : string Ppxlib.Loc.t
-        ; value : Value.t option
-        ; loc : Ppxlib.Location.t
-        }
-    | Expr of
-        { expr : Expr.t
-        ; interpolation_kind : Interpolation_kind.t
-        }
-    | Argument of
-        { name : string Ppxlib.Loc.t
-        ; argument : Expr.t option
-        ; loc : Location.t
-        ; sigil : Sigil.t
-        }
-  [@@deriving sexp_of]
-
-  val loc : t -> Ppxlib.Location.t
-end
-
 module Closing_tag : sig
   type t =
     { loc : String_relative_location.t
@@ -130,21 +92,73 @@ module Tag : sig
   val loc : t -> Ppxlib.Location.t
 end
 
-module Node : sig
+module rec Node : sig
   type t =
     | Text of string Ppxlib.Loc.t
     | Expr of
         { expr : Expr.t
         ; interpolation_kind : Interpolation_kind.t
         }
-    | Element of
-        { tag : Tag.t
-        ; attrs : Attr.t list
-        ; inner : t list option
+    | Element of Element.t
+  [@@deriving sexp_of]
+
+  val loc : t -> Ppxlib.Location.t
+end
+
+and Element : sig
+  type t =
+    { tag : Tag.t
+    ; attrs : Attr.t list
+    ; inner : Node.t list option
+    ; loc : Location.t
+    ; open_loc : Location.t
+    ; open_string_relative_location : String_relative_location.t
+    ; closing_tag : Closing_tag.t option
+    }
+  [@@deriving sexp_of]
+
+  val loc : t -> Ppxlib.Location.t
+end
+
+and Attr : sig
+  module Value : sig
+    type t =
+      | Literal of Quote.t
+      | Expr of Expr.t
+    [@@deriving sexp_of]
+
+    val loc : t -> Ppxlib.Location.t
+  end
+
+  module Sigil : sig
+    type t =
+      | Tilde
+      | Question_mark
+    [@@deriving sexp_of]
+  end
+
+  module Argument : sig
+    type t =
+      | Element of Element.t
+      | Expr of Expr.t
+    [@@deriving sexp_of]
+  end
+
+  type t =
+    | Attr of
+        { name : string Ppxlib.Loc.t
+        ; value : Value.t option
         ; loc : Ppxlib.Location.t
-        ; open_loc : Ppxlib.Location.t
-        ; open_string_relative_location : String_relative_location.t
-        ; closing_tag : Closing_tag.t option
+        }
+    | Expr of
+        { expr : Expr.t
+        ; interpolation_kind : Interpolation_kind.t
+        }
+    | Argument of
+        { name : string Ppxlib.Loc.t
+        ; argument : Argument.t option
+        ; loc : Location.t
+        ; sigil : Sigil.t
         }
   [@@deriving sexp_of]
 
@@ -157,6 +171,8 @@ module Traverse : sig
     method attr_value : Attr.Value.t -> Attr.Value.t
     method sigil : Attr.Sigil.t -> Attr.Sigil.t
     method expr : Expr.t -> Expr.t
+    method element : Element.t -> Element.t
+    method argument : Attr.Argument.t -> Attr.Argument.t
     method list : ('a -> 'a) -> 'a list -> 'a list
     method location : Location.t -> Location.t
     method node : Node.t -> Node.t

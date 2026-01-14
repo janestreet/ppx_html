@@ -55,12 +55,12 @@ let style_code ~loc ~html_syntax_module ~runtime_kind = function
          let css_string_expression =
            C.pexp_constant
              ~loc:css.loc
-             (* [prettier] truncates trailing semicolons if the style attribute
-                is a single line. There's no way to change this in prettier. This is 
-                considered an error in the new parser, so we have to always append
-                a trailing semicolon to the end of the style block before passing it to
-                [ppx_css]. This should always be fine, as extraneous semicolons are parsed
-                and ignored.
+             (* [prettier] truncates trailing semicolons if the style attribute is a
+                single line. There's no way to change this in prettier. This is considered
+                an error in the new parser, so we have to always append a trailing
+                semicolon to the end of the style block before passing it to [ppx_css].
+                This should always be fine, as extraneous semicolons are parsed and
+                ignored.
              *)
              (Pconst_string (Model.Quote.to_source css ^ ";", css.loc, None))
          in
@@ -120,24 +120,4 @@ let code
       { name with txt = txt ^ "_" }
       value
   | _ -> generic_code ~runtime_kind ~use_create:false ~loc ~html_syntax_module name value
-;;
-
-let argument
-  ~name
-  ~argument
-  ~(sigil : Model.Attr.Sigil.t)
-  ~runtime_kind
-  ~html_syntax_module
-  =
-  let label =
-    match sigil with
-    | Tilde -> Labelled name.txt
-    | Question_mark -> Optional name.txt
-  and expr =
-    match argument with
-    | None -> Ast_helper.Exp.ident ~loc:name.loc { txt = Lident name.txt; loc = name.loc }
-    | Some expr ->
-      Expr_code_gen.expr ~runtime_kind ~html_syntax_module ~type_:Argument expr
-  in
-  label, expr
 ;;

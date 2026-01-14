@@ -7,15 +7,9 @@ let%expect_test "Misparsing closing parens" =
   test {|<div>%{Vdom.Node.text "}"}</div>|};
   [%expect
     {|
-    Difference between ppx_html and ppx_html_kernel
+    same output between ppx_html and ppx_html_kernel
 
-    PPX_HTML:
-    Html_syntax.Node.div [(Vdom.Node.text "}" : Virtual_dom.Vdom.Node.t)]
-
-    PPX_HTML_KERNEL (diff):
-    === DIFF HUNK ===
-    -|Html_syntax.Node.div [(Vdom.Node.text "}" : Virtual_dom.Vdom.Node.t)]
-    +|Html_syntax.Node.div [Vdom.Node.text "}"]
+    Html_syntax.Node.div [(Vdom.Node.text "}" : _)]
     |}]
 ;;
 
@@ -23,16 +17,8 @@ let%expect_test "Nested ppx_html inside of itself." =
   test {|<div>%{[%html {xx|<div></div>|xx}]}</div>|};
   [%expect
     {|
-    Difference between ppx_html and ppx_html_kernel
+    same output between ppx_html and ppx_html_kernel
 
-    PPX_HTML:
-    Html_syntax.Node.div
-      [([%html {xx|<div></div>|xx}] : Virtual_dom.Vdom.Node.t)]
-
-    PPX_HTML_KERNEL (diff):
-    === DIFF HUNK ===
-    -|Html_syntax.Node.div
-    -|  [([%html {xx|<div></div>|xx}] : Virtual_dom.Vdom.Node.t)]
-    +|Html_syntax.Node.div [[%html {xx|<div></div>|xx}]]
+    Html_syntax.Node.div [([%html {xx|<div></div>|xx}] : _)]
     |}]
 ;;

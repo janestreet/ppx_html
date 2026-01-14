@@ -160,18 +160,18 @@ let option s = option None (s >>| Option.some)
 let scan_through_ocaml_expression_until_unclosed_curly_brace ~locs =
   let%bind code =
     scan_string "" (fun curr_string c ->
-      (* NOTE: This code is semi-complex/ugly. What it does is adding support for
-         being able to handle tricky edge cases like:
+      (* NOTE: This code is semi-complex/ugly. What it does is adding support for being
+         able to handle tricky edge cases like:
 
          [%html {|<div>%{Vdom.Node.text "}"}</div>|}]
 
          Solely reading a single character at a time results in the curly brace inside of
-         the interpolated ocaml closing the entire segment despite it being inside
-         of an escaped string.
+         the interpolated ocaml closing the entire segment despite it being inside of an
+         escaped string.
 
-         The way this code works is that it solely calls the OCaml tokenizer until
-         it seems a string with an unclosed curly brace, at which point it stops 
-         scanning the string. *)
+         The way this code works is that it solely calls the OCaml tokenizer until it
+         seems a string with an unclosed curly brace, at which point it stops scanning the
+         string. *)
       let curr_string = curr_string ^ Char.to_string c in
       let tokens_of_string = Ocaml_parsing.string_tokens curr_string in
       match tokens_of_string with
@@ -230,6 +230,7 @@ let parse_expr_common ~locs : interpolation Angstrom.t =
      and code = scan_through_ocaml_expression_until_unclosed_curly_brace ~locs
      and end_ = pos
      and () = string "}" in
+     let interpolation_content_loc = Locations.location locs ~start ~end_ in
      let code, to_t =
        match Ocaml_parsing.rsplit_on_hash code with
        | None -> code, None
@@ -261,6 +262,7 @@ let parse_expr_common ~locs : interpolation Angstrom.t =
            "Failed to parse OCaml expression inside of HTML."
        | exception exn -> fail ~start ~end_ ~locs ~exn "Failed to Parse Expression"
      in
+     let expr = { expr with pexp_loc = interpolation_content_loc } in
      let string_relative_location = { String_relative_location.start; end_ = end_ - 1 } in
      fun loc ->
        let expr =
@@ -394,52 +396,6 @@ let parse_value ~locs : Model.Attr.Value.t Angstrom.t =
     Model.Attr.Value.Literal str
 ;;
 
-let parse_attr_expr ~locs =
-  let%map { expr; interpolation_kind } = parse_expr_common ~locs in
-  Model.Attr.Expr { expr; interpolation_kind }
-;;
-
-let parse_attr ~locs : Model.Attr.t Angstrom.t =
-  with_loc'
-    ~locs
-    (match%bind choice [ interpolation_case; argument_case; return `Attr_name ] with
-     | `Attr_name ->
-       let%bind name = parse_attr_name ~expected:"name of attribute" ~locs in
-       let%bind value =
-         match%bind choice [ "=" => `Equal; return `No_equal ] with
-         | `Equal ->
-           let%map () = char '='
-           and value = parse_value ~locs in
-           Some value
-         | `No_equal -> return None
-       in
-       let ret loc = Model.Attr.Attr { name; value; loc } in
-       return ret
-     | `Argument sigil ->
-       let%map sigil =
-         match sigil with
-         | `Tilde -> string "~" *> return Model.Attr.Sigil.Tilde
-         | `Question_mark -> string "?" *> return Model.Attr.Sigil.Question_mark
-       and name = parse_attr_name ~expected:"name of argument" ~locs
-       and argument =
-         match%bind choice [ ":" => `With_payload; return `Punned ] with
-         | `Punned -> return None
-         | `With_payload ->
-           let%bind () = string ":" *> return () in
-           (match%bind choice [ "%{" => `Interpolation; return `Unknown ] with
-            | `Unknown ->
-              fail ~locs "Error. Expected an OCaml interpolation here (e.g. %{})"
-            | `Interpolation ->
-              let%bind { expr; interpolation_kind } = parse_expr_common ~locs in
-              only_normal_interpolation_allowed ~locs ~interpolation_kind (Some expr))
-       in
-       let ret loc = Model.Attr.Argument { name; argument; loc; sigil } in
-       ret
-     | `Expression ->
-       let%map expr = parse_attr_expr ~locs in
-       fun _ -> expr)
-;;
-
 let parse_tag_expr ~locs =
   let%bind { expr; interpolation_kind } = parse_expr_common ~locs in
   only_normal_interpolation_allowed ~locs ~interpolation_kind (Model.Tag.Expr expr)
@@ -527,21 +483,76 @@ let fail_with_closing_tag ~(tag : Tag.t) ~locs =
       [%string {|Expected closing '>' to terminate %{element}, but found '%{c#Char}'|}]
 ;;
 
-let many_attrs ~tag ~locs =
-  fix (fun many_attrs ->
-    match%bind choice [ ">" => `End; "/>" => `End; return `Must_have_whitespace ] with
-    | `End -> return []
-    | `Must_have_whitespace ->
-      let%bind () = skip_req_ws <|> fail_with_closing_tag ~tag ~locs in
-      (match%bind choice [ ">" => `End; "/>" => `End; return `Maybe_attr ] with
-       | `End -> return []
-       | `Maybe_attr ->
-         let%map curr = parse_attr ~locs
-         and rem = many_attrs in
-         curr :: rem))
+let parse_attr_expr ~locs =
+  let%map { expr; interpolation_kind } = parse_expr_common ~locs in
+  Model.Attr.Expr { expr; interpolation_kind }
 ;;
 
-let parse_element ~(parse_node : Node.t t) ~locs : Node.t Angstrom.t =
+let rec parse_attr ~parse_node ~locs : Model.Attr.t Angstrom.t =
+  with_loc'
+    ~locs
+    (match%bind choice [ interpolation_case; argument_case; return `Attr_name ] with
+     | `Attr_name ->
+       let%bind name = parse_attr_name ~expected:"name of attribute" ~locs in
+       let%bind value =
+         match%bind choice [ "=" => `Equal; return `No_equal ] with
+         | `Equal ->
+           let%map () = char '='
+           and value = parse_value ~locs in
+           Some value
+         | `No_equal -> return None
+       in
+       let ret loc = Model.Attr.Attr { name; value; loc } in
+       return ret
+     | `Argument sigil ->
+       let error_message =
+         "Error. Expected an OCaml interpolation (e.g. %{}) or HTML element here (e.g. \
+          (<></>))"
+       in
+       let%map sigil =
+         match sigil with
+         | `Tilde -> string "~" *> return Model.Attr.Sigil.Tilde
+         | `Question_mark -> string "?" *> return Model.Attr.Sigil.Question_mark
+       and name = parse_attr_name ~expected:"name of argument" ~locs
+       and argument =
+         match%bind choice [ ":" => `With_payload; return `Punned ] with
+         | `Punned -> return None
+         | `With_payload ->
+           let%bind () = string ":" *> return () in
+           (match%bind
+              choice
+                [ "%{" => `Interpolation
+                ; "(<" => `Element
+                ; "<" => `Fail_with_hint
+                ; return `Unknown
+                ]
+            with
+            | `Unknown -> fail ~locs error_message
+            | `Interpolation ->
+              let%bind { expr; interpolation_kind } = parse_expr_common ~locs in
+              only_normal_interpolation_allowed
+                ~locs
+                ~interpolation_kind
+                (Some (Attr.Argument.Expr expr))
+            | `Element ->
+              let%bind () = char '('
+              and element = parse_element ~parse_node ~locs
+              and () = char ')' in
+              return (Some (Attr.Argument.Element element))
+            | `Fail_with_hint ->
+              fail
+                ~locs
+                [%string
+                  "%{error_message} (HINT: Did you forget to wrap the element in \
+                   parentheses?)"])
+       in
+       let ret loc = Model.Attr.Argument { name; argument; loc; sigil } in
+       ret
+     | `Expression ->
+       let%map expr = parse_attr_expr ~locs in
+       fun _ -> expr)
+
+and parse_element ~(parse_node : Node.t t) ~locs : Element.t Angstrom.t =
   with_loc'
     ~locs
     (let%bind { txt = tag, attrs, closed, open_string_relative_location; loc = open_loc } =
@@ -550,7 +561,7 @@ let parse_element ~(parse_node : Node.t t) ~locs : Node.t Angstrom.t =
          (let%bind start = pos in
           let%bind () = char '<'
           and tag = parse_tag ~locs in
-          let%map attrs = many_attrs ~locs ~tag
+          let%map attrs = many_attrs ~parse_node ~locs ~tag
           and () = skip_opt_ws
           and closed = option (char '/' *> skip_opt_ws) >>| Option.is_some
           and end_ = pos
@@ -592,13 +603,13 @@ let parse_element ~(parse_node : Node.t t) ~locs : Node.t Angstrom.t =
          and close_end = pos
          and () = char '>' <|> fail_with_closing_tag ~tag ~locs in
          let open struct
-           (* NOTE: This is a bit complex.  There are roughly three scenarios:
+           (* NOTE: This is a bit complex. There are roughly three scenarios:
 
-              - "Normal" tags, (e.g. <div></div>): The closing tag _must_ match the opening
-                tag.
+              - "Normal" tags, (e.g. <div></div>): The closing tag _must_ match the
+                opening tag.
 
-              - "Interpolated" tags/Fragments (e.g. <></> or <%{F}></>): The
-                closing tag _must_ be empty.
+              - "Interpolated" tags/Fragments (e.g. <></> or <%[{F}]></>): The closing tag
+                _must_ be empty.
 
               - "Component" tags (e.g. <Foo.f></> or <Foo.f></Foo.f>): The closing tag may
                 be empty or must match the opening tag.
@@ -656,22 +667,41 @@ let parse_element ~(parse_node : Node.t t) ~locs : Node.t Angstrom.t =
                 fail [%string "Expected closing tag </%{expected}>, but got </%{got}>."]))
      in
      fun loc ->
-       Node.Element
-         { tag; attrs; inner; loc; open_loc; open_string_relative_location; closing_tag })
+       { Element.tag
+       ; attrs
+       ; inner
+       ; loc
+       ; open_loc
+       ; open_string_relative_location
+       ; closing_tag
+       })
+
+and many_attrs ~parse_node ~tag ~locs =
+  fix (fun many_attrs ->
+    match%bind choice [ ">" => `End; "/>" => `End; return `Must_have_whitespace ] with
+    | `End -> return []
+    | `Must_have_whitespace ->
+      let%bind () = skip_req_ws <|> fail_with_closing_tag ~tag ~locs in
+      (match%bind choice [ ">" => `End; "/>" => `End; return `Maybe_attr ] with
+       | `End -> return []
+       | `Maybe_attr ->
+         let%map curr = parse_attr ~parse_node ~locs
+         and rem = many_attrs in
+         curr :: rem))
 ;;
 
 let collapse_prefix_and_trailing_ws s =
-  (* NOTE: This "collapses" whitespace so that it remains in-sync with the spec
-     defined in: 
+  (* NOTE: This "collapses" whitespace so that it remains in-sync with the spec defined
+     in:
 
      https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Whitespace
 
      this does not "collapse" across adjacent whitespace between elements sadly.
 
-     The "collapsing" whitespace part is optional. Another valid way of addressing
-     this would be to solely leave the whitespace in, but this would have some runtime
-     cost in addition to making the string harder to read during tests... This instead
-     moves the cost to build time (at ppx expansion time).
+     The "collapsing" whitespace part is optional. Another valid way of addressing this
+     would be to solely leave the whitespace in, but this would have some runtime cost in
+     addition to making the string harder to read during tests... This instead moves the
+     cost to build time (at ppx expansion time).
   *)
   match String.for_all s ~f:Char.is_whitespace with
   | true -> " "
@@ -738,7 +768,9 @@ let parse_node ~locs : Model.Node.t Angstrom.t =
   fix (fun parse_node ->
     match%bind choice [ interpolation_case; "<" => `Element; return `Text ] with
     | `Expression -> parse_node_expr ~locs
-    | `Element -> parse_element ~parse_node ~locs
+    | `Element ->
+      let%bind.Angstrom element = parse_element ~parse_node ~locs in
+      return (Node.Element element)
     | `Text -> parse_text ~locs)
 ;;
 
@@ -749,8 +781,8 @@ let parse ~locs =
   | Some _ ->
     (* NOTE: Here is unparsed input. Parsing will fail, but we still do things here to
        provide better error messages. I _think_ that this only happens with
-       <div></div></div> though I am unsure it's __ONLY__ in that case hence
-       the `Unknown case. *)
+       <div></div></div> though I am unsure it's __ONLY__ in that case hence the `Unknown
+       case. *)
     (match%bind choice [ "</" => `Unopened_tag; return `Unknown ] with
      | `Unopened_tag -> fail ~locs "This closing tag was never opened."
      | `Unknown ->
