@@ -121,23 +121,3 @@ let code
       value
   | _ -> generic_code ~runtime_kind ~use_create:false ~loc ~html_syntax_module name value
 ;;
-
-let argument
-  ~name
-  ~argument
-  ~(sigil : Model.Attr.Sigil.t)
-  ~runtime_kind
-  ~html_syntax_module
-  =
-  let label =
-    match sigil with
-    | Tilde -> Labelled name.txt
-    | Question_mark -> Optional name.txt
-  and expr =
-    match argument with
-    | None -> Ast_helper.Exp.ident ~loc:name.loc { txt = Lident name.txt; loc = name.loc }
-    | Some expr ->
-      Expr_code_gen.expr ~runtime_kind ~html_syntax_module ~type_:Argument expr
-  in
-  label, expr
-;;

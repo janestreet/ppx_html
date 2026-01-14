@@ -5,15 +5,9 @@ let%expect_test "We do not incorrectly count escaped '#''s as module identifiers
   test {|<div>%{text "#hi!"}</div>|};
   [%expect
     {|
-    Difference between ppx_html and ppx_html_kernel
+    same output between ppx_html and ppx_html_kernel
 
-    PPX_HTML:
-    Html_syntax.Node.div [(text "#hi!" : Virtual_dom.Vdom.Node.t)]
-
-    PPX_HTML_KERNEL (diff):
-    === DIFF HUNK ===
-    -|Html_syntax.Node.div [(text "#hi!" : Virtual_dom.Vdom.Node.t)]
-    +|Html_syntax.Node.div [text "#hi!"]
+    Html_syntax.Node.div [(text "#hi!" : _)]
     |}]
 ;;
 
@@ -21,19 +15,10 @@ let%expect_test "Two kinds of '#'s" =
   test {|<div>%{text "#hi!"#Module}</div>|};
   [%expect
     {|
-    Difference between ppx_html and ppx_html_kernel
+    same output between ppx_html and ppx_html_kernel
 
-    PPX_HTML:
     Html_syntax.Node.div
-      [(Html_syntax.Node.Primitives.text (Module.to_string (text "#hi!")) :
-      Virtual_dom.Vdom.Node.t)]
-
-    PPX_HTML_KERNEL (diff):
-    === DIFF HUNK ===
-      Html_syntax.Node.div
-    -|  [(Html_syntax.Node.Primitives.text (Module.to_string (text "#hi!")) :
-    -|  Virtual_dom.Vdom.Node.t)]
-    +|  [Html_syntax.Node.Primitives.text (Module.to_string (text "#hi!"))]
+      [(Html_syntax.Node.Primitives.text (Module.to_string (text "#hi!")) : _)]
     |}]
 ;;
 
@@ -41,19 +26,10 @@ let%expect_test "Normal case" =
   test {|<div>%{text "#hi!"#Module}</div>|};
   [%expect
     {|
-    Difference between ppx_html and ppx_html_kernel
+    same output between ppx_html and ppx_html_kernel
 
-    PPX_HTML:
     Html_syntax.Node.div
-      [(Html_syntax.Node.Primitives.text (Module.to_string (text "#hi!")) :
-      Virtual_dom.Vdom.Node.t)]
-
-    PPX_HTML_KERNEL (diff):
-    === DIFF HUNK ===
-      Html_syntax.Node.div
-    -|  [(Html_syntax.Node.Primitives.text (Module.to_string (text "#hi!")) :
-    -|  Virtual_dom.Vdom.Node.t)]
-    +|  [Html_syntax.Node.Primitives.text (Module.to_string (text "#hi!"))]
+      [(Html_syntax.Node.Primitives.text (Module.to_string (text "#hi!")) : _)]
     |}]
 ;;
 
@@ -163,12 +139,12 @@ module%test [@name "Other contexts"] _ = struct
                  | Some x -> Foo.to_attr x) : Virtual_dom.Vdom.Attr.t)]
         [((match "#hi" with
            | None -> Html_syntax.Node.Primitives.none
-           | Some x -> x) : Virtual_dom.Vdom.Node.t);
+           | Some x -> x) : _);
         Html_syntax.Node.Primitives.text " ";
         ((match "#hi" with
           | None -> Html_syntax.Node.Primitives.none
           | Some x -> Html_syntax.Node.Primitives.text (Foo.to_string x)) :
-        Virtual_dom.Vdom.Node.t)]
+        _)]
 
       PPX_HTML_KERNEL (diff):
       === DIFF HUNK ===
@@ -180,21 +156,17 @@ module%test [@name "Other contexts"] _ = struct
       -|         ((match "#hi" with
       +|           | Some x -> x);
       +|         (match "#hi" with
-      -|           | None -> Html_syntax.Attr.Primitives.empty
+                  | None -> Html_syntax.Attr.Primitives.empty
       -|           | Some x -> Foo.to_attr x) : Virtual_dom.Vdom.Attr.t)]
-      +|          | None -> Html_syntax.Attr.Primitives.empty
       +|          | Some x -> Foo.to_attr x)]
-      -|  [((match "#hi" with
-      -|     | None -> Html_syntax.Node.Primitives.none
-      -|     | Some x -> x) : Virtual_dom.Vdom.Node.t);
-      +|  [(match "#hi" with | None -> Html_syntax.Node.Primitives.none | Some x -> x);
+          [((match "#hi" with
+             | None -> Html_syntax.Node.Primitives.none
+             | Some x -> x) : _);
           Html_syntax.Node.Primitives.text " ";
-      -|  ((match "#hi" with
-      +|  (match "#hi" with
-           | None -> Html_syntax.Node.Primitives.none
-      -|    | Some x -> Html_syntax.Node.Primitives.text (Foo.to_string x)) :
-      -|  Virtual_dom.Vdom.Node.t)]
-      +|   | Some x -> Html_syntax.Node.Primitives.text (Foo.to_string x))]
+          ((match "#hi" with
+            | None -> Html_syntax.Node.Primitives.none
+            | Some x -> Html_syntax.Node.Primitives.text (Foo.to_string x)) :
+          _)]
       |}]
   ;;
 
@@ -209,12 +181,12 @@ module%test [@name "Other contexts"] _ = struct
         ~attrs:[(Html_syntax.Attr.Primitives.many "#hi" : Virtual_dom.Vdom.Attr.t);
                (Html_syntax.Attr.Primitives.many
                   (Ppx_html_runtime.List.map "#hi" ~f:Foo.to_attr) : Virtual_dom.Vdom.Attr.t)]
-        [(Html_syntax.Node.Primitives.fragment "#hi" : Virtual_dom.Vdom.Node.t);
+        [(Html_syntax.Node.Primitives.fragment "#hi" : _);
         Html_syntax.Node.Primitives.text " ";
         (Html_syntax.Node.Primitives.fragment
            (Ppx_html_runtime.List.map "#hi"
               ~f:(fun x -> Html_syntax.Node.Primitives.text (Foo.to_string x))) :
-        Virtual_dom.Vdom.Node.t)]
+        _)]
 
       PPX_HTML_KERNEL (diff):
       === DIFF HUNK ===
@@ -224,16 +196,13 @@ module%test [@name "Other contexts"] _ = struct
       +|  ~attrs:[Html_syntax.Attr.Primitives.many "#hi";
       +|         Html_syntax.Attr.Primitives.many
       -|            (Ppx_html_runtime.List.map "#hi" ~f:Foo.to_attr) : Virtual_dom.Vdom.Attr.t)]
-      -|  [(Html_syntax.Node.Primitives.fragment "#hi" : Virtual_dom.Vdom.Node.t);
       +|           (Ppx_html_runtime.List.map "#hi" ~f:Foo.to_attr)]
-      +|  [Html_syntax.Node.Primitives.fragment "#hi";
+          [(Html_syntax.Node.Primitives.fragment "#hi" : _);
           Html_syntax.Node.Primitives.text " ";
-      -|  (Html_syntax.Node.Primitives.fragment
-      +|  Html_syntax.Node.Primitives.fragment
-            (Ppx_html_runtime.List.map "#hi"
-      -|        ~f:(fun x -> Html_syntax.Node.Primitives.text (Foo.to_string x))) :
-      -|  Virtual_dom.Vdom.Node.t)]
-      +|       ~f:(fun x -> Html_syntax.Node.Primitives.text (Foo.to_string x)))]
+          (Html_syntax.Node.Primitives.fragment
+             (Ppx_html_runtime.List.map "#hi"
+                ~f:(fun x -> Html_syntax.Node.Primitives.text (Foo.to_string x))) :
+          _)]
       |}]
   ;;
 end

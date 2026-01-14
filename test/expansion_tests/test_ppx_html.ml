@@ -182,15 +182,9 @@ let%expect_test "Interpolation with no parsing context" =
   test {|%{foo}|};
   [%expect
     {|
-    Difference between ppx_html and ppx_html_kernel
+    same output between ppx_html and ppx_html_kernel
 
-    PPX_HTML:
-    (foo : Virtual_dom.Vdom.Node.t)
-
-    PPX_HTML_KERNEL (diff):
-    === DIFF HUNK ===
-    -|(foo : Virtual_dom.Vdom.Node.t)
-    +|foo
+    (foo : _)
     |}];
   (* NOTE: Wow! It using fragment implicitly here is really cool! *)
   Expect_test_helpers_core.require_does_raise (fun () -> test {|%{foo} %{bar}|});
@@ -282,48 +276,43 @@ let%expect_test "Complex-ish test case" =
              (((Html_syntax.Attr.on_click)[@merlin.focus ])
                 (fun _ -> Effect.print_s ([%message "capybaras are cool"])) :
              Virtual_dom.Vdom.Attr.t)]
-      [(title : Virtual_dom.Vdom.Node.t);
+      [(title : _);
       Html_syntax.Node.span
         ~attrs:[(((Html_syntax.Attr.class_)[@merlin.focus ]) "pill" : Virtual_dom.Vdom.Attr.t);
                (((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-verb" :
-               Virtual_dom.Vdom.Attr.t)]
-        [(Vdom.Node.text verb : Virtual_dom.Vdom.Node.t)];
+               Virtual_dom.Vdom.Attr.t)] [(Vdom.Node.text verb : _)];
       Html_syntax.Node.span
         ~attrs:[(((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-text" :
-               Virtual_dom.Vdom.Attr.t)]
-        [(Vdom.Node.text text : Virtual_dom.Vdom.Node.t)];
-      (help : Virtual_dom.Vdom.Node.t)]
+               Virtual_dom.Vdom.Attr.t)] [(Vdom.Node.text text : _)];
+      (help : _)]
 
     PPX_HTML_KERNEL (diff):
     === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[(Html_syntax.Attr.classes ["menu-add-card"] : Virtual_dom.Vdom.Attr.t);
-    -|         (((Html_syntax.Attr.on_click)[@merlin.focus ])
     +|  ~attrs:[((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card";
+    -|         (((Html_syntax.Attr.on_click)[@merlin.focus ])
     +|         ((Html_syntax.Attr.on_click)[@merlin.focus ])
     -|            (fun _ -> Effect.print_s ([%message "capybaras are cool"])) :
     -|         Virtual_dom.Vdom.Attr.t)]
-    -|  [(title : Virtual_dom.Vdom.Node.t);
     +|           (fun _ -> Effect.print_s ([%message "capybaras are cool"]))]
-    +|  [title;
+    -|  [(title : _);
     -|  Html_syntax.Node.span
     -|    ~attrs:[(((Html_syntax.Attr.class_)[@merlin.focus ]) "pill" : Virtual_dom.Vdom.Attr.t);
+    +|  [(title : _);
     +|  Html_syntax.Node.span
     +|    ~attrs:[((Html_syntax.Attr.class_)[@merlin.focus ]) "pill";
     -|           (((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-verb" :
-    -|           Virtual_dom.Vdom.Attr.t)]
-    -|    [(Vdom.Node.text verb : Virtual_dom.Vdom.Node.t)];
+    -|           Virtual_dom.Vdom.Attr.t)] [(Vdom.Node.text verb : _)];
     +|           ((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-verb"]
-    +|    [Vdom.Node.text verb];
+    +|    [(Vdom.Node.text verb : _)];
     -|  Html_syntax.Node.span
     -|    ~attrs:[(((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-text" :
-    -|           Virtual_dom.Vdom.Attr.t)]
-    -|    [(Vdom.Node.text text : Virtual_dom.Vdom.Node.t)];
-    -|  (help : Virtual_dom.Vdom.Node.t)]
+    -|           Virtual_dom.Vdom.Attr.t)] [(Vdom.Node.text text : _)];
     +|  Html_syntax.Node.span
     +|    ~attrs:[((Html_syntax.Attr.class_)[@merlin.focus ]) "menu-add-card-text"]
-    +|    [Vdom.Node.text text];
-    +|  help]
+    +|    [(Vdom.Node.text text : _)];
+        (help : _)]
     |}]
 ;;
 
@@ -530,19 +519,16 @@ let%expect_test "ppx_html inside of ppx_html" =
     Html_syntax.Node.div
       ~attrs:[(((Html_syntax.Attr.no_quotes)[@merlin.focus ]) "1" : Virtual_dom.Vdom.Attr.t);
              (((Html_syntax.Attr.with_quotes)[@merlin.focus ]) "2" : Virtual_dom.Vdom.Attr.t)]
-      [Html_syntax.Node.Primitives.text " ";
-      ([%html {x|<p>hello</p>|x}] : Virtual_dom.Vdom.Node.t)]
+      [Html_syntax.Node.Primitives.text " "; ([%html {x|<p>hello</p>|x}] : _)]
 
     PPX_HTML_KERNEL (diff):
     === DIFF HUNK ===
       Html_syntax.Node.div
     -|  ~attrs:[(((Html_syntax.Attr.no_quotes)[@merlin.focus ]) "1" : Virtual_dom.Vdom.Attr.t);
-    -|         (((Html_syntax.Attr.with_quotes)[@merlin.focus ]) "2" : Virtual_dom.Vdom.Attr.t)]
     +|  ~attrs:[((Html_syntax.Attr.no_quotes)[@merlin.focus ]) "1";
+    -|         (((Html_syntax.Attr.with_quotes)[@merlin.focus ]) "2" : Virtual_dom.Vdom.Attr.t)]
     +|         ((Html_syntax.Attr.with_quotes)[@merlin.focus ]) "2"]
-    -|  [Html_syntax.Node.Primitives.text " ";
-    -|  ([%html {x|<p>hello</p>|x}] : Virtual_dom.Vdom.Node.t)]
-    +|  [Html_syntax.Node.Primitives.text " "; [%html {x|<p>hello</p>|x}]]
+        [Html_syntax.Node.Primitives.text " "; ([%html {x|<p>hello</p>|x}] : _)]
     |}]
 ;;
 
@@ -666,7 +652,7 @@ let%expect_test "Other forms of html escaping" =
 let%expect_test "Comments" =
   (* NOTE: This only documents current behavior and is not necessary a bug. *)
   (* HTML comments do not work. It would be cool if it gave a more descriptive error
-     message on the misparse.  *)
+     message on the misparse. *)
   test
     {|
     <div>
@@ -692,21 +678,10 @@ let%expect_test "Comments" =
   |};
   [%expect
     {|
-    Difference between ppx_html and ppx_html_kernel
+    same output between ppx_html and ppx_html_kernel
 
-    PPX_HTML:
     Html_syntax.Node.div
-      [Html_syntax.Node.div [];
-      (Vdom.Node.none : Virtual_dom.Vdom.Node.t);
-      Html_syntax.Node.div []]
-
-    PPX_HTML_KERNEL (diff):
-    === DIFF HUNK ===
-      Html_syntax.Node.div
-    -|  [Html_syntax.Node.div [];
-    -|  (Vdom.Node.none : Virtual_dom.Vdom.Node.t);
-    -|  Html_syntax.Node.div []]
-    +|  [Html_syntax.Node.div []; Vdom.Node.none; Html_syntax.Node.div []]
+      [Html_syntax.Node.div []; (Vdom.Node.none : _); Html_syntax.Node.div []]
     |}]
 ;;
 

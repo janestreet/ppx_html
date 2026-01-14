@@ -160,51 +160,6 @@ module Quote = struct
   let to_source (t : t) = List.map t.txt ~f:Elt.to_source |> String.concat ~sep:""
 end
 
-module Attr = struct
-  module Value = struct
-    type t =
-      | Literal of Quote.t
-      | Expr of Expr.t
-    [@@deriving sexp_of]
-
-    let loc = function
-      | Literal t -> Quote.loc t
-      | Expr t -> Expr.loc t
-    ;;
-  end
-
-  module Sigil = struct
-    type t =
-      | Tilde
-      | Question_mark
-    [@@deriving sexp_of]
-  end
-
-  type t =
-    | Attr of
-        { name : string Loc.t
-        ; value : Value.t option
-        ; loc : Location.t
-        }
-    | Expr of
-        { expr : Expr.t
-        ; interpolation_kind : Interpolation_kind.t
-        }
-    | Argument of
-        { name : string Loc.t
-        ; argument : Expr.t option
-        ; loc : Location.t
-        ; sigil : Sigil.t
-        }
-  [@@deriving sexp_of]
-
-  let loc = function
-    | Attr { name = _; value = _; loc } -> loc
-    | Expr expr -> Expr.loc expr.expr
-    | Argument { name = _; argument = _; sigil = _; loc } -> loc
-  ;;
-end
-
 module Longident = struct
   type t = Ppxlib.Longident.t =
     | Lident of string
@@ -246,36 +201,154 @@ module Tag = struct
   ;;
 end
 
-module Node = struct
+module rec Node : sig
+  type t =
+    | Text of string Ppxlib.Loc.t
+    | Expr of
+        { expr : Expr.t
+        ; interpolation_kind : Interpolation_kind.t
+        }
+    | Element of Element.t
+  [@@deriving sexp_of]
+
+  val loc : t -> Ppxlib.Location.t
+end = struct
   type t =
     | Text of string Loc.t
     | Expr of
         { expr : Expr.t
         ; interpolation_kind : Interpolation_kind.t
         }
-    | Element of
-        { tag : Tag.t
-        ; attrs : Attr.t list
-        ; inner : t list option
-        ; loc : Location.t
-        ; open_loc : Location.t
-        ; open_string_relative_location : String_relative_location.t
-        ; closing_tag : Closing_tag.t option
-        }
+    | Element of Element.t
   [@@deriving sexp_of]
 
   let loc = function
     | Text t -> t.loc
     | Expr t -> Expr.loc t.expr
-    | Element
-        { tag = _
-        ; attrs = _
-        ; inner = _
-        ; loc
-        ; open_loc = _
-        ; open_string_relative_location = _
-        ; closing_tag = _
-        } -> loc
+    | Element t -> Element.loc t
+  ;;
+end
+
+and Element : sig
+  type t =
+    { tag : Tag.t
+    ; attrs : Attr.t list
+    ; inner : Node.t list option
+    ; loc : Location.t
+    ; open_loc : Location.t
+    ; open_string_relative_location : String_relative_location.t
+    ; closing_tag : Closing_tag.t option
+    }
+  [@@deriving sexp_of]
+
+  val loc : t -> Ppxlib.Location.t
+end = struct
+  type t =
+    { tag : Tag.t
+    ; attrs : Attr.t list
+    ; inner : Node.t list option
+    ; loc : Location.t
+    ; open_loc : Location.t
+    ; open_string_relative_location : String_relative_location.t
+    ; closing_tag : Closing_tag.t option
+    }
+  [@@deriving sexp_of]
+
+  let loc t = t.loc
+end
+
+and Attr : sig
+  module Value : sig
+    type t =
+      | Literal of Quote.t
+      | Expr of Expr.t
+    [@@deriving sexp_of]
+
+    val loc : t -> Ppxlib.Location.t
+  end
+
+  module Sigil : sig
+    type t =
+      | Tilde
+      | Question_mark
+    [@@deriving sexp_of]
+  end
+
+  module Argument : sig
+    type t =
+      | Element of Element.t
+      | Expr of Expr.t
+    [@@deriving sexp_of]
+  end
+
+  type t =
+    | Attr of
+        { name : string Ppxlib.Loc.t
+        ; value : Value.t option
+        ; loc : Ppxlib.Location.t
+        }
+    | Expr of
+        { expr : Expr.t
+        ; interpolation_kind : Interpolation_kind.t
+        }
+    | Argument of
+        { name : string Ppxlib.Loc.t
+        ; argument : Argument.t option
+        ; loc : Location.t
+        ; sigil : Sigil.t
+        }
+  [@@deriving sexp_of]
+
+  val loc : t -> Ppxlib.Location.t
+end = struct
+  module Value = struct
+    type t =
+      | Literal of Quote.t
+      | Expr of Expr.t
+    [@@deriving sexp_of]
+
+    let loc = function
+      | Literal t -> Quote.loc t
+      | Expr t -> Expr.loc t
+    ;;
+  end
+
+  module Sigil = struct
+    type t =
+      | Tilde
+      | Question_mark
+    [@@deriving sexp_of]
+  end
+
+  module Argument = struct
+    type t =
+      | Element of Element.t
+      | Expr of Expr.t
+    [@@deriving sexp_of]
+  end
+
+  type t =
+    | Attr of
+        { name : string Loc.t
+        ; value : Value.t option
+        ; loc : Location.t
+        }
+    | Expr of
+        { expr : Expr.t
+        ; interpolation_kind : Interpolation_kind.t
+        }
+    | Argument of
+        { name : string Loc.t
+        ; argument : Argument.t option
+        ; loc : Location.t
+        ; sigil : Sigil.t
+        }
+  [@@deriving sexp_of]
+
+  let loc = function
+    | Attr { name = _; value = _; loc } -> loc
+    | Expr expr -> Expr.loc expr.expr
+    | Argument { name = _; argument = _; sigil = _; loc } -> loc
   ;;
 end
 
@@ -312,6 +385,20 @@ include struct
     ; escape_kind : escape_kind
     }
 
+  and element = Element.t =
+    { tag : tag
+    ; attrs : attr list
+    ; inner : node list option
+    ; loc : location
+    ; open_loc : location
+    ; open_string_relative_location : string_relative_location
+    ; closing_tag : closing_tag option
+    }
+
+  and argument = Attr.Argument.t =
+    | Element of element
+    | Expr of expr
+
   and quote_elt = Quote.Elt.t =
     | Literal of string with_loc
     | Expr of expr
@@ -338,7 +425,7 @@ include struct
         }
     | Argument of
         { name : string with_loc
-        ; argument : expr option
+        ; argument : argument option
         ; loc : location
         ; sigil : sigil
         }
@@ -372,15 +459,7 @@ include struct
         { expr : expr
         ; interpolation_kind : interpolation_kind
         }
-    | Element of
-        { tag : tag
-        ; attrs : attr list
-        ; inner : node list option
-        ; loc : location
-        ; open_loc : location
-        ; open_string_relative_location : string_relative_location
-        ; closing_tag : closing_tag option
-        }
+    | Element of element
   [@@deriving traverse_map]
 end
 

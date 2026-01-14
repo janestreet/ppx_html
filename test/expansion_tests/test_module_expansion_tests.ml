@@ -30,17 +30,10 @@ let%expect_test "Module expansions - node" =
   </div>|};
   [%expect
     {|
-    Difference between ppx_html and ppx_html_kernel
+    same output between ppx_html and ppx_html_kernel
 
-    PPX_HTML:
     Html_syntax.Node.div
-      [(Html_syntax.Node.Primitives.text (Foo.to_string x) : Virtual_dom.Vdom.Node.t)]
-
-    PPX_HTML_KERNEL (diff):
-    === DIFF HUNK ===
-    -|Html_syntax.Node.div
-    -|  [(Html_syntax.Node.Primitives.text (Foo.to_string x) : Virtual_dom.Vdom.Node.t)]
-    +|Html_syntax.Node.div [Html_syntax.Node.Primitives.text (Foo.to_string x)]
+      [(Html_syntax.Node.Primitives.text (Foo.to_string x) : _)]
     |}]
 ;;
 

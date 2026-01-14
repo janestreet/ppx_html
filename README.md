@@ -65,6 +65,7 @@ familiar syntax:
 | `<Foo.f> INNER </Foo.f>`           | Alternate syntax for `<Foo.f> INNER </>`.                                                |
 | `<Foo.f ~foo:%{EXPR}></>`          | Passes ~foo:EXPR to Foo.f as an OCaml argument (also supports ?optional arguments).      |
 | `<Foo.f ~foo></>`                  | Shorthand for `<Foo.f ~foo:%{foo}></>` (also supports ?optional arguments).              |
+| `<Foo.f ~foo:(<div/>)></>`         | Passes an HTML element to Foo.f as an OCaml argument (also supports ?optional arguments).|
 | `{%html|<></>|}`                   | Will call `Vdom.Node.fragment`.                                                          |
 
 Custom OCaml components and function-call syntax
@@ -229,6 +230,42 @@ Expands to:
          ~icon:Heart
          ~attrs:[ Vdom.Attr.on_click (fun _ -> order_tomato) ]
          [ Vdom.Node.text "Order Tomato" ]
+```
+
+Additionally, you can pass HTML elements directly as a named argument using the nested ppx_html syntax: `~arg:(<element/>)`. This is useful for "slot" patterns where a component accepts multiple nested components as arguments. Instead of creating separate variables, you can write the HTML inline:
+
+<!-- $MDX file=./examples/ppx_html_examples.ml,part=how-to-write-apis-preamble-3 -->
+```ocaml
+  module Container = struct
+    let view ?(footer : Vdom.Node.t option) ~(header : Vdom.Node.t) children =
+      {%html|
+        <div class="container">
+          <header>%{header}</header>
+          <main>*{children}</main>
+          ?{footer}
+        </div>
+      |}
+    ;;
+  end
+```
+
+<!-- $MDX file=./examples/ppx_html_examples.ml,part=how-to-write-apis-usage-3 -->
+```ocaml
+       {%html|
+         <Container.view ~header:(<h1>Capybara!</h1>) ~footer:(<p>Capyright 2026</p>)>
+           <p>Capybaras are the world's largest living rodent.</p>
+         </>
+       |}
+```
+
+Expands to:
+
+<!-- $MDX file=./examples/ppx_html_examples.ml,part=how-to-write-apis-usage-3-expanded -->
+```ocaml
+       Container.view
+         ~header:{%html|<h1>Capybara!</h1>|}
+         ~footer:{%html|<p>Capyright 2026</p>|}
+         [ {%html|<p>Capybaras are the world's largest living rodent.</p>|} ]
 ```
 
 Rules and notes:

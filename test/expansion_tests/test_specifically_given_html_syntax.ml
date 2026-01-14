@@ -10,16 +10,14 @@ let%expect_test "Testing with non-default syntax" =
     PPX_HTML:
     Capybara.Html_syntax.Html_syntax.Node.munch
       ~attrs:[(((Capybara.Html_syntax.Html_syntax.Attr.carrot)[@merlin.focus ])
-                 "hi" : Virtual_dom.Vdom.Attr.t)]
-      [(EXPR : Virtual_dom.Vdom.Node.t)]
+                 "hi" : Virtual_dom.Vdom.Attr.t)] [(EXPR : _)]
 
     PPX_HTML_KERNEL (diff):
     === DIFF HUNK ===
       Capybara.Html_syntax.Html_syntax.Node.munch
     -|  ~attrs:[(((Capybara.Html_syntax.Html_syntax.Attr.carrot)[@merlin.focus ])
     +|  ~attrs:[((Capybara.Html_syntax.Html_syntax.Attr.carrot)[@merlin.focus ])
-    -|             "hi" : Virtual_dom.Vdom.Attr.t)]
-    -|  [(EXPR : Virtual_dom.Vdom.Node.t)]
-    +|            "hi"] [EXPR]
+    -|             "hi" : Virtual_dom.Vdom.Attr.t)] [(EXPR : _)]
+    +|            "hi"] [(EXPR : _)]
     |}]
 ;;
