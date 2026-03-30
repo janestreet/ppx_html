@@ -4,4 +4,4 @@
  (libraries angstrom core ocaml-compiler-libs.common compiler-libs.common
    ppxlib core_kernel.reversed_list)
  (preprocess
-  (pps ppx_jane ppxlib.traverse)))
+  (pps ppx_jane ppxlib.traverse -compare-require-explicit-locality)))
