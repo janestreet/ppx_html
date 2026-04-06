@@ -522,7 +522,7 @@ let rec parse_attr ~parse_node ~locs : Model.Attr.t Angstrom.t =
            (match%bind
               choice
                 [ "%{" => `Interpolation
-                ; "(<" => `Element
+                ; "(" => `Element
                 ; "<" => `Fail_with_hint
                 ; return `Unknown
                 ]
@@ -536,7 +536,9 @@ let rec parse_attr ~parse_node ~locs : Model.Attr.t Angstrom.t =
                 (Some (Attr.Argument.Expr expr))
             | `Element ->
               let%bind () = char '('
+              and () = skip_opt_ws
               and element = parse_element ~parse_node ~locs
+              and () = skip_opt_ws
               and () = char ')' in
               return (Some (Attr.Argument.Element element))
             | `Fail_with_hint ->
