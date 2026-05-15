@@ -14,7 +14,7 @@ let%expect_test "Comments are supported" =
 
     Html_syntax.Node.div
       [Html_syntax.Node.Primitives.text
-         " Capybaras are the world's largest living rodent. "]
+         "Capybaras are the world's largest living rodent."]
     |}]
 ;;
 
@@ -33,8 +33,8 @@ let%expect_test "Commments in between things." =
 
     Html_syntax.Node.div
       [Html_syntax.Node.Primitives.text
-         " Capybaras are the world's largest living rodent. ";
+         "Capybaras are the world's largest living rodent.";
       Html_syntax.Node.Primitives.text
-        " Capybaras are the world's largest living rodent. "]
+        "Capybaras are the world's largest living rodent."]
     |}]
 ;;

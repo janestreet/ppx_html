@@ -550,9 +550,9 @@ let%expect_test "Childless HTML Tags" =
 
     PPX_HTML:
     Html_syntax.Node.div
-      [Html_syntax.Node.Primitives.text " Hello ";
+      [Html_syntax.Node.Primitives.text "Hello";
       Html_syntax.Node.br ();
-      Html_syntax.Node.Primitives.text " World! ";
+      Html_syntax.Node.Primitives.text "World!";
       Html_syntax.Node.input
         ~attrs:[(((Html_syntax.Attr.type_)[@merlin.focus ]) "checkbox" :
                Virtual_dom.Vdom.Attr.t)] ();
@@ -564,9 +564,9 @@ let%expect_test "Childless HTML Tags" =
     PPX_HTML_KERNEL (diff):
     === DIFF HUNK ===
       Html_syntax.Node.div
-        [Html_syntax.Node.Primitives.text " Hello ";
+        [Html_syntax.Node.Primitives.text "Hello";
         Html_syntax.Node.br ();
-        Html_syntax.Node.Primitives.text " World! ";
+        Html_syntax.Node.Primitives.text "World!";
         Html_syntax.Node.input
     -|    ~attrs:[(((Html_syntax.Attr.type_)[@merlin.focus ]) "checkbox" :
     -|           Virtual_dom.Vdom.Attr.t)] ();

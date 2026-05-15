@@ -435,8 +435,176 @@ let skip_comment =
   *> return ()
 ;;
 
+let collapse_prefix_and_trailing_ws s =
+  (* NOTE: This "collapses" whitespace so that it remains in-sync with the spec defined
+     in:
+
+     https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Whitespace
+
+     this does not "collapse" across adjacent whitespace between elements sadly.
+
+     The "collapsing" whitespace part is optional. Another valid way of addressing this
+     would be to solely leave the whitespace in, but this would have some runtime cost in
+     addition to making the string harder to read during tests... This instead moves the
+     cost to build time (at ppx expansion time).
+  *)
+  match (not (String.is_empty s)) && String.for_all s ~f:Char.is_whitespace with
+  | true -> " "
+  | false ->
+    let ws_prefix = String.take_while s ~f:Char.is_whitespace in
+    let ws_suffix =
+      String.take_while (String.rev s) ~f:Char.is_whitespace |> String.rev
+    in
+    let s =
+      match ws_prefix with
+      | "" -> s
+      | _ -> " " ^ String.chop_prefix_exn ~prefix:ws_prefix s
+    in
+    let s =
+      match ws_suffix with
+      | "" -> s
+      | _ -> String.chop_suffix_exn ~suffix:ws_suffix s ^ " "
+    in
+    s
+;;
+
+module Collapse_ws = struct
+  (* [Collapse_ws] uses buffers to build strings because otherwise we'd have to either use
+     a [char Reversed_list.t], which would have to be reversed and then concatenated, or a
+     string, which takes [n] time to append each char to. *)
+  type t =
+    | Leading of (Buffer.t * bool)
+    | Content of
+        { content : Buffer.t
+        ; trailing_whitespace : Buffer.t * bool
+        }
+
+  let join_whitespace
+    ((ws, seen_newline) : Buffer.t * bool)
+    (c : [ `Newline | `Whitespace of char ])
+    =
+    match seen_newline, c with
+    | true, (`Newline | `Whitespace _) | false, `Newline ->
+      (* If we've already seen a newline, we ignore all whitespace since this will either
+         be trimmed or turned into a single space *)
+      Buffer.reset ws;
+      ws, true
+    | false, `Whitespace c ->
+      Buffer.add_char ws c;
+      ws, false
+  ;;
+
+  let append_char t c =
+    let c =
+      match c with
+      | '\n' | '\r' -> `Newline
+      | (' ' | '\t') as c -> `Whitespace c
+      | other -> `Content other
+    in
+    match t, c with
+    | Leading leading, ((`Newline | `Whitespace _) as c) ->
+      Leading (join_whitespace leading c)
+    | Content ({ trailing_whitespace = ws; _ } as t), ((`Newline | `Whitespace _) as c) ->
+      Content { t with trailing_whitespace = join_whitespace ws c }
+    | Leading (buffer, true), `Content c ->
+      let ( (* Reset the buffer since we've seen a newline which means we need to trim the
+               leading whitespace *) )
+        =
+        Buffer.reset buffer
+      in
+      Buffer.add_char buffer c;
+      Content { content = buffer; trailing_whitespace = Buffer.create 16, false }
+    | Leading (buffer, false), `Content c ->
+      let ( (* We will be reusing the leading whitespace buffer here since we haven't seen
+               a newline, which means we want to preserve the whitespace. *) )
+        =
+        Buffer.add_char buffer c
+      in
+      Content { content = buffer; trailing_whitespace = Buffer.create 16, false }
+    | Content { content; trailing_whitespace = ws, seen_trailing_newline; _ }, `Content c
+      ->
+      let ( (* Handle the whitespace first since it's the whitespace that has been
+               trailing [content].
+
+               In the middle of text content, whitespace containing a newline will be
+               translated into a single space, while whitespace that does NOT contain a
+               newline is preserved
+               https://typescriptlang.org/play/?#code/DwEwlgbgfAUABHAhguAjFG4GN5xAgUxmAHpxog
+            *) )
+        =
+        let () =
+          match seen_trailing_newline with
+          | true -> Buffer.add_char content ' '
+          | false -> Buffer.add_buffer content ws
+        in
+        Buffer.reset ws
+      in
+      Buffer.add_char content c;
+      Content { content; trailing_whitespace = ws, false }
+  ;;
+
+  let finalize = function
+    | Leading (_, true) ->
+      (* This is whitespace containing a newline. Trim all whitespace, which returns the
+         empty string *)
+      ""
+    | Leading (ws, false) ->
+      (* A single line of whitespace without newlines. We return the whitespace directly *)
+      Buffer.contents ws
+    | Content { content; trailing_whitespace = ws, seen_trailing_newline } ->
+      let ( (* Update the contents buffer with the trailing whitespace buffer if no
+               newline has been seen *) )
+        =
+        if not seen_trailing_newline then Buffer.add_buffer content ws;
+        Buffer.reset ws
+      in
+      Buffer.contents content
+  ;;
+end
+
+(** [collapse_ws] will:
+    - In the middle of text content, whitespace containing a newline will be translated
+      into a single space, whereas whitespace that does NOT contain a newline is preserved
+    - For leading and trailing whitespace, whitespace containing a newline will be
+      trimmed, whereas whitespace that does NOT contain a newline is preserved
+
+    This is done to replicate what the TypeScript compiler does with whitespaces for jsx. *)
+let collapse_ws s =
+  let max_chars = String.length s in
+  String.fold
+    s
+    ~init:(Collapse_ws.Leading (Buffer.create max_chars, false))
+    ~f:Collapse_ws.append_char
+  |> Collapse_ws.finalize
+;;
+
+module Processed_node = struct
+  type t =
+    | Expression of
+        { expr : Expr.t
+        ; interpolation_kind : Interpolation_kind.t
+        }
+    | Element of Element.t
+    | Text of string loc
+
+  let finalize ~(whitespace_behavior : [ `Jsx | `Collapse_leading_trailing ]) = function
+    | Expression { expr; interpolation_kind } -> Node.Expr { expr; interpolation_kind }
+    | Text { txt; loc } ->
+      let previous = collapse_prefix_and_trailing_ws txt in
+      let current =
+        match whitespace_behavior with
+        | `Jsx -> collapse_ws txt
+        | `Collapse_leading_trailing ->
+          (* This is the old behavior, so we just pass [previous] *)
+          previous
+      in
+      Node.Text { txt = current, previous; loc }
+    | Element element -> Node.Element element
+  ;;
+end
+
 let many_nodes ~parse_node =
-  fix (fun (many_nodes : Node.t list t) ->
+  fix (fun (many_nodes : Processed_node.t list t) ->
     match%bind
       choice
         [ interpolation_case
@@ -457,9 +625,6 @@ let many_nodes ~parse_node =
     | `Comment ->
       let%bind () = skip_comment in
       many_nodes)
-  >>| List.filter ~f:(function
-    | Node.Text { txt = ""; loc = _ } -> false
-    | _ -> true)
 ;;
 
 let fail_with_closing_tag ~(tag : Tag.t) ~locs =
@@ -523,7 +688,9 @@ let rec parse_attr ~parse_node ~locs : Model.Attr.t Angstrom.t =
               choice
                 [ "%{" => `Interpolation
                 ; "(" => `Element
-                ; "<" => `Fail_with_hint
+                ; "<" => `Fail_element_missing_parens
+                ; "{" => `Fail_missing_percent
+                ; Char.is_alpha >=> `Fail_missing_interpolation
                 ; return `Unknown
                 ]
             with
@@ -541,12 +708,28 @@ let rec parse_attr ~parse_node ~locs : Model.Attr.t Angstrom.t =
               and () = skip_opt_ws
               and () = char ')' in
               return (Some (Attr.Argument.Element element))
-            | `Fail_with_hint ->
+            | `Fail_element_missing_parens ->
               fail
                 ~locs
                 [%string
                   "%{error_message} (HINT: Did you forget to wrap the element in \
-                   parentheses?)"])
+                   parentheses?)"]
+            | `Fail_missing_percent ->
+              let percent_interpolation = "%{...}" in
+              fail
+                ~locs
+                [%string
+                  "%{error_message} (HINT: Did you mean to write \
+                   %{percent_interpolation} instead of {...}? The percent sign is \
+                   required.)"]
+            | `Fail_missing_interpolation ->
+              let percent_interpolation = "%{...}" in
+              fail
+                ~locs
+                [%string
+                  "%{error_message} (HINT: Did you mean to write \
+                   %{percent_interpolation}? Bare identifiers are not allowed here, wrap \
+                   the expression in %{percent_interpolation}.)"])
        in
        let ret loc = Model.Attr.Argument { name; argument; loc; sigil } in
        ret
@@ -554,7 +737,7 @@ let rec parse_attr ~parse_node ~locs : Model.Attr.t Angstrom.t =
        let%map expr = parse_attr_expr ~locs in
        fun _ -> expr)
 
-and parse_element ~(parse_node : Node.t t) ~locs : Element.t Angstrom.t =
+and parse_element ~(parse_node : Processed_node.t t) ~locs : Element.t Angstrom.t =
   with_loc'
     ~locs
     (let%bind { txt = tag, attrs, closed, open_string_relative_location; loc = open_loc } =
@@ -589,6 +772,18 @@ and parse_element ~(parse_node : Node.t t) ~locs : Element.t Angstrom.t =
        else (
          let%bind inner = many_nodes ~parse_node
          and close_start = pos in
+         let inner =
+           let whitespace_behavior =
+             match tag with
+             | Literal (Literal { txt = "script" | "style"; _ }) ->
+               (* For script and style tags, we want to preserve the whitespace so that we
+                  don't mangle the javascript/css into something unusable. This is a
+                  different behavior from how typescript handles script/style tags in JSX *)
+               `Collapse_leading_trailing
+             | _ -> `Jsx
+           in
+           List.map inner ~f:(Processed_node.finalize ~whitespace_behavior)
+         in
          let%bind `Has_closing =
            match%bind peek_string 2 <|> fail ~locs (force error_message) with
            | "</" -> return `Has_closing
@@ -692,39 +887,6 @@ and many_attrs ~parse_node ~tag ~locs =
          curr :: rem))
 ;;
 
-let collapse_prefix_and_trailing_ws s =
-  (* NOTE: This "collapses" whitespace so that it remains in-sync with the spec defined
-     in:
-
-     https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Whitespace
-
-     this does not "collapse" across adjacent whitespace between elements sadly.
-
-     The "collapsing" whitespace part is optional. Another valid way of addressing this
-     would be to solely leave the whitespace in, but this would have some runtime cost in
-     addition to making the string harder to read during tests... This instead moves the
-     cost to build time (at ppx expansion time).
-  *)
-  match String.for_all s ~f:Char.is_whitespace with
-  | true -> " "
-  | false ->
-    let ws_prefix = String.take_while s ~f:Char.is_whitespace in
-    let ws_suffix =
-      String.take_while (String.rev s) ~f:Char.is_whitespace |> String.rev
-    in
-    let s =
-      match ws_prefix with
-      | "" -> s
-      | _ -> " " ^ String.chop_prefix_exn ~prefix:ws_prefix s
-    in
-    let s =
-      match ws_suffix with
-      | "" -> s
-      | _ -> String.chop_suffix_exn ~suffix:ws_suffix s ^ " "
-    in
-    s
-;;
-
 let string_until_interpolation_or_segment =
   let maybe_take s = s => `Take s in
   fix (fun string_until_interpolation_or_segment ->
@@ -747,37 +909,73 @@ let string_until_interpolation_or_segment =
        | Some c -> char c *> string_until_interpolation_or_segment))
 ;;
 
-let parse_text ~locs : Node.t t =
-  let%map str =
-    with_loc
-      ~locs
-      (consumed string_until_interpolation_or_segment
-       >>| (fun s ->
-             if String.for_all s ~f:Char.is_whitespace && String.mem s '\n'
-             then ""
-             else collapse_prefix_and_trailing_ws s)
-       >>| String.substr_replace_all ~pattern:"%%" ~with_:"%")
-  in
-  Node.Text str
+let parse_text ~locs : string loc t =
+  with_loc
+    ~locs
+    (consumed string_until_interpolation_or_segment
+     >>| fun s ->
+     if String.for_all s ~f:Char.is_whitespace && String.mem s '\n'
+     then ""
+     else String.substr_replace_all ~pattern:"%%" ~with_:"%" s)
 ;;
 
 let parse_node_expr ~locs =
   let%map { expr; interpolation_kind } = parse_expr_common ~locs in
-  Node.Expr { expr; interpolation_kind }
+  Processed_node.Expression { expr; interpolation_kind }
 ;;
 
-let parse_node ~locs : Model.Node.t Angstrom.t =
+let parse_node ~locs : Processed_node.t Angstrom.t =
   fix (fun parse_node ->
     match%bind choice [ interpolation_case; "<" => `Element; return `Text ] with
     | `Expression -> parse_node_expr ~locs
     | `Element ->
-      let%bind.Angstrom element = parse_element ~parse_node ~locs in
-      return (Node.Element element)
-    | `Text -> parse_text ~locs)
+      let%map.Angstrom element = parse_element ~parse_node ~locs in
+      Processed_node.Element element
+    | `Text ->
+      let%map.Angstrom text = parse_text ~locs in
+      Processed_node.Text text)
 ;;
 
-let parse ~locs =
+let filter_empty_text_nodes nodes =
+  List.filter nodes ~f:(function
+    | Node.Text { txt = "", _; _ } -> false
+    | _ -> true)
+;;
+
+let map_nodes =
+  object
+    inherit Model.Traverse.map as super
+
+    method! element ({ inner; _ } as element) =
+      let inner =
+        let%map.Option inner in
+        filter_empty_text_nodes inner
+      in
+      let element = { element with inner } in
+      super#element element
+  end
+;;
+
+let map_filter_empty_text_nodes nodes =
+  filter_empty_text_nodes nodes |> List.map ~f:map_nodes#node
+;;
+
+let parse ~filter_empty_text_nodes ~locs =
   let%bind nodes = many_nodes ~parse_node:(parse_node ~locs) in
+  let nodes =
+    (* Top-level nodes should all be treated as [jsx] as by definition we cannot be inside
+       a [script] tag since this is the top level *)
+    List.map nodes ~f:(Processed_node.finalize ~whitespace_behavior:`Jsx)
+  in
+  let nodes =
+    (* We're filtering at the top level so that we can retrieve the empty text nodes if
+       necessary. This is useful for tree smashes, as removing the empty text nodes
+       actually removes some information about the code that is crucial to generating
+       correct treesmashes that deal with whitespace *)
+    match filter_empty_text_nodes with
+    | true -> map_filter_empty_text_nodes nodes
+    | false -> nodes
+  in
   match%bind peek_char with
   | None -> return nodes
   | Some _ ->
@@ -791,9 +989,9 @@ let parse ~locs =
        fail ~locs "Unparsed input. Please report this bug to ppx_html maintainers.")
 ;;
 
-let of_string ~loc str =
+let of_string ?(filter_empty_text_nodes = true) ~loc str =
   let locs = Locations.create loc str in
-  let parse = parse ~locs in
+  let parse = parse ~filter_empty_text_nodes ~locs in
   match
     Angstrom.parse_string
       ~consume:All
@@ -813,3 +1011,8 @@ let of_string ~loc str =
     in
     Error.raise ~loc error
 ;;
+
+module Private = struct
+  let collapse_prefix_and_trailing_ws = collapse_prefix_and_trailing_ws
+  let collapse_ws = collapse_ws
+end
