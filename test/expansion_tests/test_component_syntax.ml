@@ -236,7 +236,7 @@ let%expect_test "Component syntax support OCaml args - literal result in nice er
     </>
   |});
   [%expect
-    {| ("Error. Expected an OCaml interpolation (e.g. %{}) or HTML element here (e.g. (<></>))") |}];
+    {| ("Error. Expected an OCaml interpolation (e.g. %{}) or HTML element here (e.g. (<></>)) (HINT: Did you mean to write %{...}? Bare identifiers are not allowed here, wrap the expression in %{...}.)") |}];
   Expect_test_helpers_core.require_does_raise (fun () ->
     test
       {|

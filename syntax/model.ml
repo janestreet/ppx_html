@@ -203,7 +203,7 @@ end
 
 module rec Node : sig
   type t =
-    | Text of string Ppxlib.Loc.t
+    | Text of (string * string) Ppxlib.Loc.t
     | Expr of
         { expr : Expr.t
         ; interpolation_kind : Interpolation_kind.t
@@ -214,7 +214,7 @@ module rec Node : sig
   val loc : t -> Ppxlib.Location.t
 end = struct
   type t =
-    | Text of string Loc.t
+    | Text of (string * string) Loc.t
     | Expr of
         { expr : Expr.t
         ; interpolation_kind : Interpolation_kind.t
@@ -454,13 +454,13 @@ include struct
     | Fragment of location
 
   and node = Node.t =
-    | Text of string with_loc
+    | Text of (string * string) with_loc
     | Expr of
         { expr : expr
         ; interpolation_kind : interpolation_kind
         }
     | Element of element
-  [@@deriving traverse_map]
+  [@@deriving traverse_map, traverse_iter]
 end
 
 module Traverse = struct
@@ -476,5 +476,18 @@ module Traverse = struct
       method location : location -> location = Fn.id
     end
 
+  class iter' =
+    object
+      inherit iter
+      method list : 'a. ('a -> unit) -> 'a list -> unit = fun f -> List.iter ~f
+      method option : 'a. ('a -> unit) -> 'a option -> unit = fun f -> Option.iter ~f
+      method string : string -> unit = fun _ -> ()
+      method int : int -> unit = fun _ -> ()
+      method bool : bool -> unit = fun _ -> ()
+      method ocaml_expr : ocaml_expr -> unit = fun _ -> ()
+      method location : location -> unit = fun _ -> ()
+    end
+
   class map = map'
+  class iter = iter'
 end

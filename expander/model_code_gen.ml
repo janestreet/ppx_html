@@ -12,7 +12,7 @@ let rec node_expr
   -> expression
   =
   fun ~html_syntax_module ~runtime_kind -> function
-  | Text { txt; loc } ->
+  | Text { txt = txt, _old; loc } ->
     [%expr
       [%e Shared.node_fn ~loc ~html_syntax_module ~primitive:true "text"]
         [%e C.estring ~loc txt]]
@@ -183,11 +183,48 @@ and element_expr
   C.pexp_apply ~loc:full_loc tag args
 ;;
 
-let code ~loc ~html_syntax_module ~(runtime_kind : Runtime_kind.t) (model : Node.t list) =
+let check_whitespace_behavior =
+  object
+    inherit Ppx_html_syntax.Model.Traverse.map as super
+
+    method! node node =
+      match node with
+      | Text { txt = curr, prev; loc } ->
+        let () =
+          if not (String.equal curr prev)
+          then
+            Location.raise_errorf
+              ~loc
+              "This ppx_html invocation produces different output with the new \
+               whitespace behavior. To silence this error, change [%s] to [%s]. \n\n\
+               !!!!This will change the behavior of the ppx!!!!\n\n\
+               Please carefully audit your application to ensure it behaves as expected."
+              "%html"
+              "%html.jsx"
+        in
+        node
+      | node -> super#node node
+  end
+;;
+
+let code
+  ?(skip_whitespace_behavior_check = false)
+  ~loc
+  ~html_syntax_module
+  ~(runtime_kind : Runtime_kind.t)
+  (model : Node.t list)
+  =
   let model =
     List.filter model ~f:(function
-      | Text { txt; _ } when String.for_all txt ~f:Char.is_whitespace -> false
+      | Text { txt = txt, _old; _ } when String.for_all txt ~f:Char.is_whitespace -> false
       | _ -> true)
+  in
+  let () =
+    if not skip_whitespace_behavior_check
+    then
+      List.iter
+        ~f:(fun node -> check_whitespace_behavior#node node |> (ignore : Node.t -> unit))
+        model
   in
   match model with
   | [] -> Shared.node_fn ~html_syntax_module ~loc ~primitive:true "none"

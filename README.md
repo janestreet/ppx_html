@@ -79,16 +79,15 @@ Existing manual custom component syntax:
 <!-- $MDX file=./examples/ppx_html_examples.ml,part=simple-syntax-preamble -->
 ```ocaml
 module Custom_typography = struct
-  let text children = {%html|<span style="color: #a1a1a1"> *{children} </span>|}
+  let text children = {%html.jsx|<span style="color: #a1a1a1"> *{children} </span>|}
 end
 ```
 <!-- $MDX file=./examples/ppx_html_examples.ml,part=simple-syntax-manual -->
 ```ocaml
-     {%html|
+     {%html.jsx|
        <div>
-         <%{Custom_typography.text}>
-           <strong>Capybara</strong> UI
-         </>
+         <%{Custom_typography.text}
+           ><strong>#{"Capybara"}</strong>#{" UI "}</>
        </div>
      |}
 ```
@@ -97,11 +96,10 @@ Or more sugary syntax for the same call:
 
 <!-- $MDX file=./examples/ppx_html_examples.ml,part=simple-syntax-sugar -->
 ```ocaml
-     {%html|
+     {%html.jsx|
        <div>
-         <Custom_typography.text>
-           <strong>Capybara</strong> UI
-         </>
+         <Custom_typography.text
+           ><strong>#{"Capybara"}</strong>#{" UI "}</>
        </div>
      |}
 ```
@@ -110,25 +108,18 @@ You can also pass named and optional OCaml arguments directly in the tag head, a
 
 <!-- $MDX file=./examples/ppx_html_examples.ml,part=many-syntaxes-sugar -->
 ```ocaml
-     {%html|
+     {%html.jsx|
        <div>
-         <Custom_typography.text>
-           <strong>Capybara</strong> UI
-         </>
-
-         <!-- Function with children and attributes. Named args use ~, optional args use ?. -->
-         <Button.view
+         <Custom_typography.text
+           ><strong>#{"Capybara"}</strong>#{" UI "}</><!-- Function with children and attributes. Named args use ~, optional args use ?. --><Button.view
            ~on_click
            ~variant:%{Variant.Filled}
            ~size:%{`Xs}
            %{tomato : Vdom.Attr.t}
            disabled
-         >
-           Hello!
-         </>
-
-         <!-- Self-closing function with optional arg punning -->
-         <Loading_indicator.spinner ?icon />
+           >#{" Hello! "}</><!-- Self-closing function with optional arg punning --><Loading_indicator.spinner
+           ?icon
+         />
        </div>
      |}
 ```
@@ -170,7 +161,7 @@ For example:
 ```ocaml
 module Components = struct
   let button ?(attrs : Vdom.Attr.t list = []) (children : Vdom.Node.t list) =
-    {%html|
+    {%html.jsx|
       <button style="background-color: tomato" *{attrs}>
         *{children}
       </button>
@@ -178,7 +169,7 @@ module Components = struct
   ;;
 
   let image ?(attrs : Vdom.Attr.t list = []) () =
-    {%html|<img style="width: 50%" *{attrs} />|}
+    {%html.jsx|<img style="width: 50%" *{attrs} />|}
   ;;
 end
 ```
@@ -187,12 +178,10 @@ Usage:
 
 <!-- $MDX file=./examples/ppx_html_examples.ml,part=how-to-write-apis-usage -->
 ```ocaml
-     {%html|
+     {%html.jsx|
        <div>
-         <Components.button on_click=%{fun _ -> order_tomato}>
-           Order Tomato
-         </>
-         <Components.image src="./images/order-confirmation.png" />
+         <Components.button on_click=%{fun _ -> order_tomato}
+           >#{" Order Tomato "}</><Components.image src="./images/order-confirmation.png" />
        </div>
      |}
 ```
@@ -204,7 +193,7 @@ You can also add named and optional arguments; callers pass them with `~arg:%{ex
   module Components = struct
     let button ?(icon : Icon.t option) ?(attrs = []) children =
       let icon = icon |> Option.map Icon.view in
-      {%html|
+      {%html.jsx|
         <button style="background-color: tomato" *{attrs}>
           ?{icon} *{children}
         </button>
@@ -215,10 +204,9 @@ You can also add named and optional arguments; callers pass them with `~arg:%{ex
 
 <!-- $MDX file=./examples/ppx_html_examples.ml,part=how-to-write-apis-usage-2 -->
 ```ocaml
-       {%html|
-         <Components.button ~icon:%{Heart} on_click=%{fun _ -> order_tomato}>
-           Order Tomato
-         </>
+       {%html.jsx|
+         <Components.button ~icon:%{Heart} on_click=%{fun _ -> order_tomato}
+           >#{" Order Tomato "}</>
        |}
 ```
 
@@ -238,7 +226,7 @@ Additionally, you can pass HTML elements directly as a named argument using the 
 ```ocaml
   module Container = struct
     let view ?(footer : Vdom.Node.t option) ~(header : Vdom.Node.t) children =
-      {%html|
+      {%html.jsx|
         <div class="container">
           <header>%{header}</header>
           <main>*{children}</main>
@@ -251,7 +239,7 @@ Additionally, you can pass HTML elements directly as a named argument using the 
 
 <!-- $MDX file=./examples/ppx_html_examples.ml,part=how-to-write-apis-usage-3 -->
 ```ocaml
-       {%html|
+       {%html.jsx|
          <Container.view ~header:(<h1>Capybara!</h1>) ~footer:(<p>Capyright 2026</p>)>
            <p>Capybaras are the world's largest living rodent.</p>
          </>
@@ -263,9 +251,9 @@ Expands to:
 <!-- $MDX file=./examples/ppx_html_examples.ml,part=how-to-write-apis-usage-3-expanded -->
 ```ocaml
        Container.view
-         ~header:{%html|<h1>Capybara!</h1>|}
-         ~footer:{%html|<p>Capyright 2026</p>|}
-         [ {%html|<p>Capybaras are the world's largest living rodent.</p>|} ]
+         ~header:{%html.jsx|<h1>Capybara!</h1>|}
+         ~footer:{%html.jsx|<p>Capyright 2026</p>|}
+         [ {%html.jsx|<p>Capybaras are the world's largest living rodent.</p>|} ]
 ```
 
 Rules and notes:
@@ -280,7 +268,7 @@ Children position:
 
 <!-- $MDX file=./examples/ppx_html_examples.ml,part=quick-ref-children -->
 ```ocaml
-     {%html|
+     {%html.jsx|
        <>
          <div>%{child : Vdom.Node.t}<!-- single --></div>
          <div>*{children : Vdom.Node.t list}<!-- many --></div>
@@ -293,7 +281,7 @@ Attribute position:
 
 <!-- $MDX file=./examples/ppx_html_examples.ml,part=quick-ref-attrs -->
 ```ocaml
-     {%html|
+     {%html.jsx|
        <>
          <div %{attr : Vdom.Attr.t}><!-- single --></div>
          <div *{attrs : Vdom.Attr.t list}><!-- many --></div>
@@ -338,7 +326,7 @@ To create `virtual_dom_svg` nodes instead of `virtual_dom_svg`, open
 <!-- $MDX file=test/vdom_tests/test_vdom_svg_with_hyphens.ml,part=open-example -->
 ```ocaml
    let open Virtual_dom_svg.Html_syntax in
-   {%html|
+   {%html.jsx|
      <svg height=%{100.} width=%{100.}>
        <circle
          cx=%{50.}
@@ -356,7 +344,7 @@ Alternatively, you can:
 
 <!-- $MDX file=test/vdom_tests/test_vdom_svg_with_hyphens.ml,part=inline-example -->
 ```ocaml
-    [%html.Virtual_dom_svg
+    [%html.jsx.Virtual_dom_svg
       {|
         <svg height=%{100.} width=%{100.}>
           <circle

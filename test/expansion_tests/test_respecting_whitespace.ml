@@ -31,7 +31,7 @@ let%expect_test "Whitespace is respected (no whitespace)" =
 
     Html_syntax.Node.div
       [Html_syntax.Node.span [Html_syntax.Node.Primitives.text "Hello"];
-      Html_syntax.Node.Primitives.text "world "]
+      Html_syntax.Node.Primitives.text "world"]
     |}]
 ;;
 
@@ -48,7 +48,7 @@ let%expect_test "Whitepace is respected (whitespace exists and is not eaten up)"
 
     Html_syntax.Node.div
       [Html_syntax.Node.span [Html_syntax.Node.Primitives.text "Hello"];
-      Html_syntax.Node.Primitives.text " world "]
+      Html_syntax.Node.Primitives.text " world"]
     |}]
 ;;
 
@@ -66,7 +66,7 @@ world
 
     Html_syntax.Node.div
       [Html_syntax.Node.span [Html_syntax.Node.Primitives.text "Hello"];
-      Html_syntax.Node.Primitives.text " world "]
+      Html_syntax.Node.Primitives.text "world"]
     |}]
 ;;
 
@@ -138,3 +138,55 @@ module%test [@name "Handling of whitespace around non-text tags"] _ = struct
       |}]
   ;;
 end
+
+let%expect_test "Script tags have their surrounding whitespace collapsed but inner \
+                 whitespace is respected"
+  =
+  test
+    {|
+    <script>
+      // This would cause the entire thing to fail if we collapsed all whitespaces to a
+      // single space since everything would be on the comment line
+
+      window.setTimeout(() => {
+        console.log("hello!");
+      });
+    </script>
+  |};
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Html_syntax.Node.script
+      [Html_syntax.Node.Primitives.text
+         " // This would cause the entire thing to fail if we collapsed all whitespaces to a\n      // single space since everything would be on the comment line\n\n      window.setTimeout(() => {\n        console.log(\"hello!\");\n      }); "]
+    |}]
+;;
+
+let%expect_test "Style tags have their surrounding whitespace collapsed but inner \
+                 whitespace is respected"
+  =
+  test
+    {|
+    <style>
+        /* This would cause the entire thing to fail if we collapsed all whitespaces to a
+          single space since everything would be on the comment line */
+
+        body {
+            font-size: 14px;
+        }
+
+        #warning {
+            color: red;
+        }
+    </style>
+  |};
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Html_syntax.Node.style
+      [Html_syntax.Node.Primitives.text
+         " /* This would cause the entire thing to fail if we collapsed all whitespaces to a\n          single space since everything would be on the comment line */\n\n        body {\n            font-size: 14px;\n        }\n\n        #warning {\n            color: red;\n        } "]
+    |}]
+;;

@@ -1,0 +1,6 @@
+(library
+ (name ppx_html_traverser)
+ (public_name ppx_html.traverser)
+ (libraries core compiler-libs.common ppx_html_syntax ppxlib)
+ (preprocess
+  (pps ppx_jane ppxlib.metaquot ppxlib.traverse)))

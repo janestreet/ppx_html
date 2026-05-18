@@ -249,14 +249,14 @@ module%test [@name "Using interpolation characters"] _ = struct
       {|
       same output between ppx_html and ppx_html_kernel
 
-      Html_syntax.Node.div [Html_syntax.Node.Primitives.text " % "]
+      Html_syntax.Node.div [Html_syntax.Node.Primitives.text "  %  "]
       |}];
     test {|<div>  100%  </div>|};
     [%expect
       {|
       same output between ppx_html and ppx_html_kernel
 
-      Html_syntax.Node.div [Html_syntax.Node.Primitives.text " 100% "]
+      Html_syntax.Node.div [Html_syntax.Node.Primitives.text "  100%  "]
       |}]
   ;;
 
@@ -273,14 +273,14 @@ module%test [@name "Using interpolation characters"] _ = struct
       {|
       same output between ppx_html and ppx_html_kernel
 
-      Html_syntax.Node.div [Html_syntax.Node.Primitives.text " ? "]
+      Html_syntax.Node.div [Html_syntax.Node.Primitives.text "  ?   "]
       |}];
     test {|<div>  100?   </div>|};
     [%expect
       {|
       same output between ppx_html and ppx_html_kernel
 
-      Html_syntax.Node.div [Html_syntax.Node.Primitives.text " 100? "]
+      Html_syntax.Node.div [Html_syntax.Node.Primitives.text "  100?   "]
       |}]
   ;;
 
@@ -297,14 +297,14 @@ module%test [@name "Using interpolation characters"] _ = struct
       {|
       same output between ppx_html and ppx_html_kernel
 
-      Html_syntax.Node.div [Html_syntax.Node.Primitives.text " * "]
+      Html_syntax.Node.div [Html_syntax.Node.Primitives.text "  *   "]
       |}];
     test {|<div>  100*   </div>|};
     [%expect
       {|
       same output between ppx_html and ppx_html_kernel
 
-      Html_syntax.Node.div [Html_syntax.Node.Primitives.text " 100* "]
+      Html_syntax.Node.div [Html_syntax.Node.Primitives.text "  100*   "]
       |}]
   ;;
 
@@ -386,4 +386,54 @@ module%test [@name "#{} - really basic sanity tests"] _ = struct
     [%expect
       {| ("string (#{}) interpolation is not allowed here, only %{} interpolation is allowed in this context.") |}]
   ;;
+
+  module%test [@name "Hashtag mark - quoted string"] _ = struct
+    let%expect_test "basic" =
+      test {html|<div>#{{|a quoted string|}}</div>|html};
+      [%expect
+        {xxx|
+        same output between ppx_html and ppx_html_kernel
+
+        Html_syntax.Node.div
+          [(Html_syntax.Node.Primitives.text (({|a quoted string|})[@merlin.focus ]) :
+          _)]
+        |xxx}];
+      test {html|<div>Hello #{{|world|}}!</div>|html};
+      [%expect
+        {xxx|
+        same output between ppx_html and ppx_html_kernel
+
+        Html_syntax.Node.div
+          [Html_syntax.Node.Primitives.text "Hello ";
+          (Html_syntax.Node.Primitives.text (({|world|})[@merlin.focus ]) : _);
+          Html_syntax.Node.Primitives.text "!"]
+        |xxx}]
+    ;;
+
+    let%expect_test "with curly brace inside" =
+      test {html|<div>#{{ident|curly braces } in quoted string|ident}}</div>|html};
+      [%expect
+        {|
+        same output between ppx_html and ppx_html_kernel
+
+        Html_syntax.Node.div
+          [(Html_syntax.Node.Primitives.text
+              (({ident|curly braces } in quoted string|ident})[@merlin.focus ]) :
+          _)]
+        |}]
+    ;;
+
+    let%expect_test "with quote delim ender inside" =
+      test {html|<div>#{{ident|curly braces |} in quoted string|ident}}</div>|html};
+      [%expect
+        {xxx|
+        same output between ppx_html and ppx_html_kernel
+
+        Html_syntax.Node.div
+          [(Html_syntax.Node.Primitives.text
+              (({ident|curly braces |} in quoted string|ident})[@merlin.focus ]) :
+          _)]
+        |xxx}]
+    ;;
+  end
 end

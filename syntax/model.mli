@@ -94,7 +94,7 @@ end
 
 module rec Node : sig
   type t =
-    | Text of string Ppxlib.Loc.t
+    | Text of (string * string) Ppxlib.Loc.t
     | Expr of
         { expr : Expr.t
         ; interpolation_kind : Interpolation_kind.t
@@ -194,5 +194,34 @@ module Traverse : sig
 
     method tag : Tag.t -> Tag.t
     method with_loc : ('a -> 'a) -> 'a Ppxlib.Loc.t -> 'a Ppxlib.Loc.t
+  end
+
+  (** [iter] does _not_ parse nested [ppx_html] statements. See [Ppx_html_traverser] if
+      you want that behavior *)
+  class iter : object
+    method attr : Attr.t -> unit
+    method attr_value : Attr.Value.t -> unit
+    method sigil : Attr.Sigil.t -> unit
+    method expr : Expr.t -> unit
+    method element : Element.t -> unit
+    method argument : Attr.Argument.t -> unit
+    method list : ('a -> unit) -> 'a list -> unit
+    method location : Location.t -> unit
+    method node : Node.t -> unit
+    method ocaml_expr : Ocaml_expr.t -> unit
+    method escape_kind : Escape_kind.t -> unit
+    method interpolation_kind : Interpolation_kind.t -> unit
+    method literal : Literal.t -> unit
+    method longident : Ppxlib.Longident.t -> unit
+    method option : ('a -> unit) -> 'a option -> unit
+    method quote : Quote.t -> unit
+    method quote_elt : Quote.Elt.t -> unit
+    method string : string -> unit
+    method int : int -> unit
+    method bool : bool -> unit
+    method closing_tag : Closing_tag.t -> unit
+    method string_relative_location : String_relative_location.t -> unit
+    method tag : Tag.t -> unit
+    method with_loc : ('a -> unit) -> 'a Ppxlib.Loc.t -> unit
   end
 end
