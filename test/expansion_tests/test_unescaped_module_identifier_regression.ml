@@ -171,38 +171,32 @@ module%test [@name "Other contexts"] _ = struct
   ;;
 
   let%expect_test "List interpolation" =
-    test {|<div *{"#hi"} *{"#hi"#Foo}>*{"#hi"} *{"#hi"#Foo}</div>|};
+    test {|<div *{["#hi"]} *{["#hi"]#Foo}>*{["#hi"]} *{["#hi"]#Foo}</div>|};
     [%expect
       {|
       Difference between ppx_html and ppx_html_kernel
 
       PPX_HTML:
       Html_syntax.Node.div
-        ~attrs:[(Html_syntax.Attr.Primitives.many "#hi" : Virtual_dom.Vdom.Attr.t);
+        ~attrs:[(Html_syntax.Attr.Primitives.many ["#hi"] : Virtual_dom.Vdom.Attr.t);
                (Html_syntax.Attr.Primitives.many
-                  (Ppx_html_runtime.List.map "#hi" ~f:Foo.to_attr) : Virtual_dom.Vdom.Attr.t)]
-        [(Html_syntax.Node.Primitives.fragment "#hi" : _);
-        Html_syntax.Node.Primitives.text " ";
-        (Html_syntax.Node.Primitives.fragment
-           (Ppx_html_runtime.List.map "#hi"
-              ~f:(fun x -> Html_syntax.Node.Primitives.text (Foo.to_string x))) :
-        _)]
+                  (Ppx_html_runtime.List.map ["#hi"] ~f:Foo.to_attr) : Virtual_dom.Vdom.Attr.t)]
+        (["#hi"] @ ((Html_syntax.Node.Primitives.text " ") ::
+           (Ppx_html_runtime.List.map ["#hi"]
+              ~f:(fun x -> Html_syntax.Node.Primitives.text (Foo.to_string x)))))
 
       PPX_HTML_KERNEL (diff):
       === DIFF HUNK ===
         Html_syntax.Node.div
-      -|  ~attrs:[(Html_syntax.Attr.Primitives.many "#hi" : Virtual_dom.Vdom.Attr.t);
+      -|  ~attrs:[(Html_syntax.Attr.Primitives.many ["#hi"] : Virtual_dom.Vdom.Attr.t);
       -|         (Html_syntax.Attr.Primitives.many
-      +|  ~attrs:[Html_syntax.Attr.Primitives.many "#hi";
+      +|  ~attrs:[Html_syntax.Attr.Primitives.many ["#hi"];
       +|         Html_syntax.Attr.Primitives.many
-      -|            (Ppx_html_runtime.List.map "#hi" ~f:Foo.to_attr) : Virtual_dom.Vdom.Attr.t)]
-      +|           (Ppx_html_runtime.List.map "#hi" ~f:Foo.to_attr)]
-          [(Html_syntax.Node.Primitives.fragment "#hi" : _);
-          Html_syntax.Node.Primitives.text " ";
-          (Html_syntax.Node.Primitives.fragment
-             (Ppx_html_runtime.List.map "#hi"
-                ~f:(fun x -> Html_syntax.Node.Primitives.text (Foo.to_string x))) :
-          _)]
+      -|            (Ppx_html_runtime.List.map ["#hi"] ~f:Foo.to_attr) : Virtual_dom.Vdom.Attr.t)]
+      +|           (Ppx_html_runtime.List.map ["#hi"] ~f:Foo.to_attr)]
+          (["#hi"] @ ((Html_syntax.Node.Primitives.text " ") ::
+             (Ppx_html_runtime.List.map ["#hi"]
+                ~f:(fun x -> Html_syntax.Node.Primitives.text (Foo.to_string x)))))
       |}]
   ;;
 end

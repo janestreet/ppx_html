@@ -74,8 +74,16 @@ let%expect_test "With a tilde!" =
 ;;
 
 let%expect_test "Mismatched closing tag" =
-  Expect_test_helpers_core.require_does_raise (fun () -> test {|<Foo.f></Bar.f>|});
-  [%expect {| ("Expected closing tag </Foo.f>, but got </Bar.f>.") |}]
+  test_raise {|<Foo.f></Bar.f>|};
+  [%expect
+    {|
+    Expected closing tag </Foo.f>, but got </Bar.f>.
+      |
+    0 | <Foo.f></Bar.f>
+      |        ^^^^^^^^ invalid closing tag here
+      | ^^^^^^^ opening tag found here
+      |
+    |}]
 ;;
 
 let%expect_test "OCaml arguments" =
@@ -228,22 +236,65 @@ let%expect_test "Component shorthand syntax" =
 ;;
 
 let%expect_test "Component syntax support OCaml args - literal result in nice errors" =
-  Expect_test_helpers_core.require_does_raise (fun () ->
-    test
-      {|
+  test_raise
+    {|
     <>
       <Foo.f ~arg1:foo></>
     </>
-  |});
+  |};
   [%expect
-    {| ("Error. Expected an OCaml interpolation (e.g. %{}) or HTML element here (e.g. (<></>)) (HINT: Did you mean to write %{...}? Bare identifiers are not allowed here, wrap the expression in %{...}.)") |}];
-  Expect_test_helpers_core.require_does_raise (fun () ->
-    test
-      {|
+    {|
+    Expected an OCaml interpolation (e.g. %{}) or HTML element (e.g. (<></>))
+      |
+    1 |     <>
+    2 |       <Foo.f ~arg1:foo></>
+      |                    ^ invalid argument here
+    3 |     </>
+      |
+      | Hint: Did you mean to write %{...}? Bare identifiers are not allowed here, wrap the expression in %{...}.
+    |}];
+  test_raise
+    {|
     <>
       <Foo.f ~arg1:"foo"></>
     </>
-  |});
+  |};
   [%expect
-    {| ("Error. Expected an OCaml interpolation (e.g. %{}) or HTML element here (e.g. (<></>))") |}]
+    {|
+    Expected an OCaml interpolation (e.g. %{}) or HTML element (e.g. (<></>))
+      |
+    1 |     <>
+    2 |       <Foo.f ~arg1:"foo"></>
+      |                    ^ invalid argument here
+    3 |     </>
+      |
+    |}]
+;;
+
+let%expect_test "List splice (*{}) in component children passes list directly" =
+  test {|<Foo.f>*{contents}</>|};
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Foo.f contents
+    |}];
+  test {|<Foo.f><Bar.b>Hello</> *{more_contents}</>|};
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Foo.f ((Bar.b [Html_syntax.Node.Primitives.text "Hello"]) ::
+      (Html_syntax.Node.Primitives.text " ") :: more_contents)
+    |}];
+  test {|<Foo.f><Bar.b>Hello</> <div>Goodbye</div> *{more_contents}</>|};
+  [%expect
+    {|
+    same output between ppx_html and ppx_html_kernel
+
+    Foo.f ((Bar.b [Html_syntax.Node.Primitives.text "Hello"]) ::
+      (Html_syntax.Node.Primitives.text " ") ::
+      (Html_syntax.Node.div [Html_syntax.Node.Primitives.text "Goodbye"]) ::
+      (Html_syntax.Node.Primitives.text " ") :: more_contents)
+    |}]
 ;;

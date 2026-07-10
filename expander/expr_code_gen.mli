@@ -22,6 +22,12 @@ val expr
   -> Model.Expr.t
   -> expression
 
+val node_list_expr
+  :  html_syntax_module:modul
+  -> runtime_kind:Runtime_kind.t
+  -> Model.Expr.t
+  -> expression
+
 val quote
   :  html_syntax_module:modul
   -> runtime_kind:Runtime_kind.t

@@ -25,11 +25,14 @@ depends: [
   "virtual_dom"
   "angstrom"                 {>= "0.15.0"}
   "dune"                     {>= "3.17.0"}
-  "js_of_ocaml-ppx"          {= "6.0.1+ox"}
-  "ocaml-compiler-libs"      {= "v0.17.0+ox"}
-  "ppxlib"                   {= "0.33.0+ox"}
+  "js_of_ocaml-ppx"          {>= "6.0.0"}
+  "ocaml-compiler-libs"      {>= "v0.11.0"}
+  "ppxlib"                   {>= "0.33.0" & < "0.36.0"}
 ]
 available: arch != "x86_32"
+conflicts: [
+  "oxcaml-compiler" {< "5.2.0minus39"}
+]
 synopsis: "PPX_HTML is a way of constructing Vdom.Node.t's using HTML syntax."
 description: "
 PPX_HTML is a way of constructing Vdom.Node.t's using HTML syntax.

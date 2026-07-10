@@ -101,7 +101,7 @@ module Type = struct
     | String, Some module_ ->
       Location.raise_errorf
         ~loc:module_.loc
-        "#{} string intepolation cannot have a module identifier"
+        "#{} string interpolation cannot have a module identifier"
     | String, None ->
       let to_text = Shared.node_fn ~loc ~html_syntax_module ~primitive:true "text" in
       [%expr [%e to_text] [%e Merlin_helpers.focus_expression expression]]
@@ -173,6 +173,23 @@ let expr ?type_ ~html_syntax_module ~runtime_kind (expr : Model.Expr.t) =
        | Some type_ -> [%expr ([%e t] : [%t type_])])
   in
   t
+;;
+
+let node_list_expr ~html_syntax_module ~runtime_kind:_ (expr : Model.Expr.t) =
+  match expr with
+  | { expr; to_t = None; _ } -> expr
+  | { expr = { pexp_loc = loc; _ } as expr; to_t = Some module_; _ } ->
+    (* [to_t] is the module path *)
+    let to_text =
+      Shared.node_fn ~loc:module_.loc ~html_syntax_module ~primitive:true "text"
+    in
+    let to_string =
+      C.pexp_ident
+        ~loc:module_.loc
+        { txt = Ldot (Lident module_.txt, "to_string"); loc = module_.loc }
+    in
+    [%expr
+      Ppx_html_runtime.List.map [%e expr] ~f:(fun x -> [%e to_text] ([%e to_string] x))]
 ;;
 
 let with_immediate_quote ({ txt; loc } : Model.Quote.t) ~f =

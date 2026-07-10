@@ -100,12 +100,18 @@ let%expect_test "Newlines inside of the opening tag should not cause trimming" =
            https://typescriptlang.org/play/?ssl=3&ssc=1&pln=4&pc=1#code/FAHmBMEsDdgPgAQAsCmAbNB7BID0Vo4g
         *) )
     =
-    Expect_test_helpers_core.require_does_raise (fun () ->
-      test
-        {|<
-    div>                         Capybara's are the world's largest living rodent.</div>|});
+    test_raise
+      {|<
+    div>                         Capybara's are the world's largest living rodent.</div>|};
     [%expect
-      {| ("Expected a valid HTML tag, but instead found whitespace. No whitespace is allowed here..  ") |}]
+      {|
+      Expected a valid HTML tag, but instead found whitespace. No whitespace is allowed here..
+        |
+      0 | <
+        |  ^
+      1 |     div>                         Capybara's are the world's largest living rodent.</div>
+        |
+      |}]
   in
   ()
 ;;

@@ -9,4 +9,5 @@ open! Base
 
 module List : sig
   val map : 'a list -> f:local_ ('a -> 'b) -> 'b list
+  val concat : 'a list list -> 'a list
 end

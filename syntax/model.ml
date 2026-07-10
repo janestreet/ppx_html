@@ -203,7 +203,7 @@ end
 
 module rec Node : sig
   type t =
-    | Text of (string * string) Ppxlib.Loc.t
+    | Text of string Ppxlib.Loc.t
     | Expr of
         { expr : Expr.t
         ; interpolation_kind : Interpolation_kind.t
@@ -214,7 +214,7 @@ module rec Node : sig
   val loc : t -> Ppxlib.Location.t
 end = struct
   type t =
-    | Text of (string * string) Loc.t
+    | Text of string Loc.t
     | Expr of
         { expr : Expr.t
         ; interpolation_kind : Interpolation_kind.t
@@ -454,7 +454,7 @@ include struct
     | Fragment of location
 
   and node = Node.t =
-    | Text of (string * string) with_loc
+    | Text of string with_loc
     | Expr of
         { expr : expr
         ; interpolation_kind : interpolation_kind

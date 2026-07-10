@@ -34,12 +34,21 @@ let%expect_test "HTML Custom elements" =
      syntax.
 
      https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements *)
-  Expect_test_helpers_core.require_does_raise (fun () ->
-    test
-      {|
+  test_raise
+    {|
     <custom-element></custom-element>
-  |});
-  [%expect {| ("Expected closing '>' to terminate element \"custom\", but found '-'") |}];
+  |};
+  [%expect
+    {|
+    Expected closing '>' to terminate element "custom", but found '-'
+      |
+    0 |
+    1 |     <custom-element></custom-element>
+      |            ^ expected '>' here
+    2 |
+      |
+      | Hint: ppx_html doesn't allow dashes in HTML tags
+    |}];
   (* This is a current possible workaround in this rare situation. *)
   test
     {|
@@ -140,12 +149,21 @@ let%expect_test "Attributes and element tag interpolation" =
 let%expect_test "Key-based attribute interpolation" =
   (* NOTE: This currently only demonstrates existing behavior of a feature we may want to
      support in the future. *)
-  Expect_test_helpers_core.require_does_raise (fun () ->
-    test
-      {|
+  test_raise
+    {|
     <div %{Virtual_dom_svg.Attr.href}="google.com"></div>
-  |});
-  [%expect {| ("Expected closing '>' to terminate element \"div\", but found '='") |}];
+  |};
+  [%expect
+    {|
+    Expected closing '>' to terminate element "div", but found '='
+      |
+    0 |
+    1 |     <div %{Virtual_dom_svg.Attr.href}="google.com"></div>
+      |                                      ^ expected '>' here
+    2 |
+      |
+      | Hint:
+    |}];
   test
     {|
     <%{EXPR}></>
@@ -581,9 +599,8 @@ let%expect_test "Childless HTML Tags" =
 ;;
 
 let%expect_test "Childless HTML Tags - need a closing slash" =
-  Expect_test_helpers_core.require_does_raise (fun () ->
-    test
-      {|
+  test_raise
+    {|
     <div>
       Hello
       <br>
@@ -592,8 +609,60 @@ let%expect_test "Childless HTML Tags - need a closing slash" =
       <img src="./img.png">
       <hr>
     </div>
-  |});
-  [%expect {| ("Expected closing tag </hr>, but got </div>.") |}]
+  |};
+  [%expect
+    {|
+    Expected closing tag </hr>, but got </div>.
+      |
+    6 |       <img src="./img.png">
+    7 |       <hr>
+      |       ^^^^ opening tag found here
+    8 |     </div>
+      |
+      |
+    7 |       <hr>
+    8 |     </div>
+      |     ^^^^^^ invalid closing tag here
+    9 |
+      |
+    |}]
+;;
+
+let%expect_test "[BUG]: Error across line numbers with different padding" =
+  test_raise
+    {|
+    <div>
+      Hello
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+      World!
+    </span>
+  |};
+  [%expect
+    {|
+    Expected closing tag </div>, but got </span>.
+       |
+     0 |
+     1 |     <div>
+       |     ^^^^^ opening tag found here
+     2 |       Hello
+       |
+       |
+    14 |       World!
+    15 |     </span>
+       |     ^^^^^^^ invalid closing tag here
+    16 |
+       |
+    |}]
 ;;
 
 let%expect_test "Sexp for debugging" =

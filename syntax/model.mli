@@ -94,7 +94,7 @@ end
 
 module rec Node : sig
   type t =
-    | Text of (string * string) Ppxlib.Loc.t
+    | Text of string Ppxlib.Loc.t
     | Expr of
         { expr : Expr.t
         ; interpolation_kind : Interpolation_kind.t
