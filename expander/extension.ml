@@ -49,12 +49,7 @@ let experimental_feature_checker ~loc:_ =
   end
 ;;
 
-let extension
-  ~name
-  ~runtime_kind
-  ~experimental_features_allowed
-  ~skip_whitespace_behavior_check
-  =
+let extension ~name ~runtime_kind ~experimental_features_allowed =
   Extension.declare_with_path_arg
     name
     Extension.Context.expression
@@ -75,11 +70,6 @@ let extension
       then
         List.iter model ~f:(fun node ->
           (ignore : Model.Node.t -> unit) ((experimental_feature_checker ~loc)#node node));
-      Model_code_gen.code
-        ~loc:outer_loc
-        ~html_syntax_module
-        ~runtime_kind
-        ~skip_whitespace_behavior_check
-        model
+      Model_code_gen.code ~loc:outer_loc ~html_syntax_module ~runtime_kind model
       |> loc_ghoster#expression)
 ;;

@@ -12,10 +12,15 @@ let%expect_test "Fragment support" =
 ;;
 
 let%expect_test "Fragment with attributes results in an error." =
-  Expect_test_helpers_core.require_does_raise (fun () ->
-    test {|< key="foo" on_click=%{foo}></>|});
+  test_raise {|< key="foo" on_click=%{foo}></>|};
   [%expect
-    {| ("Expected a valid HTML tag, but instead found whitespace. No whitespace is allowed here..  ") |}]
+    {|
+    Expected a valid HTML tag, but instead found whitespace. No whitespace is allowed here..
+      |
+    0 | < key="foo" on_click=%{foo}></>
+      |  ^
+      |
+    |}]
 ;;
 
 let%expect_test "Fragment support - does not get confused when interpolated tags are \

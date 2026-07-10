@@ -78,9 +78,8 @@ let%expect_test "Bonsai's hello world HTML" =
     +|       ~attrs:[((Html_syntax.Attr.id)[@merlin.focus ]) "app"] []]]
     |}];
   (* NOTE: this is the instance that did not work (the difference is the <meta> element): *)
-  Expect_test_helpers_core.require_does_raise (fun () ->
-    test
-      {|
+  test_raise
+    {|
 <html>
     <head>
         <meta charset="UTF-8">
@@ -91,8 +90,23 @@ let%expect_test "Bonsai's hello world HTML" =
         <div id="app"></div>
     </body>
 </html>
-  |});
-  [%expect {| ("Expected closing tag </meta>, but got </head>.") |}]
+  |};
+  [%expect
+    {|
+    Expected closing tag </meta>, but got </head>.
+      |
+    2 |     <head>
+    3 |         <meta charset="UTF-8">
+      |         ^^^^^^^^^^^^^^^^^^^^^^ opening tag found here
+    4 |         <title>Hello, Bonsai!</title>
+      |
+      |
+    5 |         <script defer src="main.bc.js"></script>
+    6 |     </head>
+      |     ^^^^^^^ invalid closing tag here
+    7 |     <body>
+      |
+    |}]
 ;;
 
 let%expect_test "Highcharts example" =

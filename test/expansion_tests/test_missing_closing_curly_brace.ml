@@ -2,25 +2,41 @@ open! Core
 open Test_utils
 
 let%expect_test "Test nice error message on missing curly brace" =
-  Expect_test_helpers_core.require_does_raise (fun () ->
-    test
-      {|
+  test_raise
+    {|
     <div>
 
     %{ Vdom.Node.text "hi"
 
-  |});
-  [%expect {| ("Missing curly brace for interpolated OCaml") |}]
+  |};
+  [%expect
+    {|
+    Missing curly brace for interpolated OCaml
+      |
+    2 |
+    3 |     %{ Vdom.Node.text "hi"
+      |                           ^ curly brace expected here
+    4 |
+      |
+    |}]
 ;;
 
 let%expect_test "Test nice error message on missing brace with nesting" =
-  Expect_test_helpers_core.require_does_raise (fun () ->
-    test
-      {x|
+  test_raise
+    {x|
     <div>
 
     %{ Vdom.Node.text [%string {| %{"hi"} |}]</div>
 
-  |x});
-  [%expect {| ("Missing curly brace for interpolated OCaml") |}]
+  |x};
+  [%expect
+    {xxx|
+    Missing curly brace for interpolated OCaml
+      |
+    2 |
+    3 |     %{ Vdom.Node.text [%string {| %{"hi"} |}]</div>
+      |                                                    ^ curly brace expected here
+    4 |
+      |
+    |xxx}]
 ;;

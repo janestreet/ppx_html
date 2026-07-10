@@ -12,7 +12,7 @@ let rec node_expr
   -> expression
   =
   fun ~html_syntax_module ~runtime_kind -> function
-  | Text { txt = txt, _old; loc } ->
+  | Text { txt; loc } ->
     [%expr
       [%e Shared.node_fn ~loc ~html_syntax_module ~primitive:true "text"]
         [%e C.estring ~loc txt]]
@@ -162,20 +162,60 @@ and element_expr
         , match inner with
           | None -> [%expr ()]
           | Some inner ->
-            let arg_expressions =
-              inner
-              |> List.map ~f:(fun node ->
-                node_expr ~html_syntax_module ~runtime_kind node)
-            in
+            (* This branch __should__ include the empty list as [None] is for self-closing
+               tags *)
             let loc =
-              match arg_expressions with
+              (* Any [ppx_metaquot] expressions that are created from this point forward
+                 will use [loc] for their location. Retrieve the location of every
+                 expression within [inner] *)
+              match inner with
               | [] -> full_loc
               | first :: _ ->
-                let last = List.last_exn arg_expressions in
-                let first, last = first.pexp_loc, last.pexp_loc in
+                let last = List.last_exn inner in
+                let first, last = Node.loc first, Node.loc last in
                 { loc_start = first.loc_start; loc_end = last.loc_end; loc_ghost = false }
             in
-            C.elist ~loc arg_expressions )
+            let expr =
+              List.fold_right inner ~init:None ~f:(fun node acc ->
+                let node_expr =
+                  match node with
+                  | Node.Expr { interpolation_kind = List; expr; _ } ->
+                    `List
+                      (Expr_code_gen.node_list_expr
+                         ~html_syntax_module
+                         ~runtime_kind
+                         expr)
+                  | node -> `Node (node_expr ~html_syntax_module ~runtime_kind node)
+                in
+                match node_expr, acc with
+                | `List node_expr, None ->
+                  (* No other expression yet, this list should be the starting list *)
+                  Some node_expr
+                | `List node_expr, Some acc ->
+                  (* The [@] and [::] operators are right-associative, meaning they will
+                     process everything to the right of it before processing itself.
+
+                     This means that each append should only run once, meaning that every
+                     element should only be processed once so long as we're doing the cons
+                     and appends in a single statement and not in a loop.
+
+                     Since 5.1 it's also tail-recursive
+
+                     https://ocaml.org/manual/5.1/api/Stdlib.html#:~:text=val%20(%40)%20%3A%20%27a%20list%20%2D%3E%20%27a%20list%20%2D%3E%20%27a%20list *)
+                  Some [%expr [%e node_expr] @ [%e acc]]
+                | `Node node_expr, None -> Some [%expr [ [%e node_expr] ]]
+                | `Node node_expr, Some acc ->
+                  (* [::] is the same as defining the elements directly within a list *)
+                  Some [%expr [%e node_expr] :: [%e acc]])
+            in
+            (match expr with
+             | Some expr -> expr
+             | None ->
+               (* Starting with a [None] instead of an empty list expression so that we
+                  don't append onto an empty list if the last element in the [inner]
+                  expression is a list, which would be an unnecessary runtime performance
+                  regression *)
+               [%expr []]) )
       ]
     in
     List.concat [ key_args; attrs; nodes; arguments ]
@@ -183,48 +223,11 @@ and element_expr
   C.pexp_apply ~loc:full_loc tag args
 ;;
 
-let check_whitespace_behavior =
-  object
-    inherit Ppx_html_syntax.Model.Traverse.map as super
-
-    method! node node =
-      match node with
-      | Text { txt = curr, prev; loc } ->
-        let () =
-          if not (String.equal curr prev)
-          then
-            Location.raise_errorf
-              ~loc
-              "This ppx_html invocation produces different output with the new \
-               whitespace behavior. To silence this error, change [%s] to [%s]. \n\n\
-               !!!!This will change the behavior of the ppx!!!!\n\n\
-               Please carefully audit your application to ensure it behaves as expected."
-              "%html"
-              "%html.jsx"
-        in
-        node
-      | node -> super#node node
-  end
-;;
-
-let code
-  ?(skip_whitespace_behavior_check = false)
-  ~loc
-  ~html_syntax_module
-  ~(runtime_kind : Runtime_kind.t)
-  (model : Node.t list)
-  =
+let code ~loc ~html_syntax_module ~(runtime_kind : Runtime_kind.t) (model : Node.t list) =
   let model =
     List.filter model ~f:(function
-      | Text { txt = txt, _old; _ } when String.for_all txt ~f:Char.is_whitespace -> false
+      | Text { txt; _ } when String.for_all txt ~f:Char.is_whitespace -> false
       | _ -> true)
-  in
-  let () =
-    if not skip_whitespace_behavior_check
-    then
-      List.iter
-        ~f:(fun node -> check_whitespace_behavior#node node |> (ignore : Node.t -> unit))
-        model
   in
   match model with
   | [] -> Shared.node_fn ~html_syntax_module ~loc ~primitive:true "none"

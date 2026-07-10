@@ -33,7 +33,6 @@ let%expect_test "Traversal can reach nested ppx_html expressions" =
         ~html_syntax_module:None
         ~loc:Ppxlib.Location.none
         ~runtime_kind:Js_of_ocaml
-        ~skip_whitespace_behavior_check:true
         [ node ]
       |> Ppxlib.Pprintast.string_of_expression)
   in
